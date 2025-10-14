@@ -1,0 +1,17 @@
+spotless {
+	java {
+		target '**/*.java'
+		palantirJavaFormat()
+		removeUnusedImports()
+		trimTrailingWhitespace()
+		endWithNewline()
+		targetExclude('**/build/**', '**/target/**')
+	}
+
+	groovyGradle {
+		target '**/*.gradle'
+		greclipse()
+		trimTrailingWhitespace()
+		endWithNewline()
+	}
+}

@@ -1,0 +1,8 @@
+rootProject.name = 'booking'
+
+buildCache {
+	local {
+		enabled = true
+		directory = new File(rootDir, 'build-cache')
+	}
+}
