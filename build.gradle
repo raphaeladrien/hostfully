@@ -5,6 +5,7 @@ buildscript {
 
 	ext {
 		flywayCore = "11.14.0"
+		nanoId = "main-SNAPSHOT"
 	}
 }
 
@@ -14,6 +15,7 @@ plugins {
 	id 'io.spring.dependency-management' version '1.1.7'
 	id 'com.diffplug.spotless' version '7.2.1'
 	id 'org.flywaydb.flyway' version '11.14.0'
+	id("io.freefair.lombok") version "9.0.0"
 }
 
 group = 'com.hostfully'
@@ -27,6 +29,7 @@ java {
 
 repositories {
 	mavenCentral()
+	maven { url = uri("https://jitpack.io") }
 }
 
 dependencies {
@@ -34,6 +37,8 @@ dependencies {
 	implementation("org.springframework.boot:spring-boot-starter-data-jpa")
 	implementation("org.flywaydb:flyway-core:${flywayCore}")
 	runtimeOnly("com.h2database:h2")
+
+	implementation("co.wosher:jnanoid-enhanced:${nanoId}")
 
 	testImplementation 'org.springframework.boot:spring-boot-starter-test'
 	testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
