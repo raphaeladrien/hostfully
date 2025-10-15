@@ -1,5 +1,6 @@
 # Mac OS
 .DS_Store
+.gradle
 
 target/
 !.mvn/wrapper/maven-wrapper.jar
