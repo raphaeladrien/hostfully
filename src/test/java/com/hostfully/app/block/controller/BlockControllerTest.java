@@ -1,18 +1,15 @@
 package com.hostfully.app.block.controller;
 
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.hostfully.app.block.controller.dto.BlockRequest;
 import com.hostfully.app.block.domain.Block;
-import com.hostfully.app.block.exceptions.BlockGenericException;
-import com.hostfully.app.block.exceptions.InvalidDateRangeException;
-import com.hostfully.app.block.exceptions.OverlapBlockException;
-import com.hostfully.app.block.exceptions.PropertyNotFoundException;
+import com.hostfully.app.block.exceptions.*;
 import com.hostfully.app.block.usecase.CreateBlock;
 import com.hostfully.app.block.usecase.DeleteBlock;
+import com.hostfully.app.block.usecase.UpdateBlock;
 import java.time.LocalDate;
 import java.util.UUID;
 import org.junit.jupiter.api.DisplayName;
@@ -40,6 +37,9 @@ public class BlockControllerTest {
 
     @MockitoBean
     private DeleteBlock deleteBlock;
+
+    @MockitoBean
+    private UpdateBlock updateBlock;
 
     private final String url = "/v1/blocks";
 
@@ -149,6 +149,81 @@ public class BlockControllerTest {
         Mockito.when(deleteBlock.execute(id)).thenThrow(new BlockGenericException("a error", null));
 
         final MockHttpServletRequestBuilder request = delete(url + "/" + id);
+
+        mvc.perform(request).andExpect(status().isInternalServerError());
+    }
+
+    @Test
+    @DisplayName("PUT /blocks - block updated successfully")
+    void putUpdateBlockSuccess() throws Exception {
+        final BlockRequest payload = buildBlockRequest();
+        final String id = "block-id";
+
+        Mockito.when(updateBlock.execute(Mockito.any())).thenReturn(buildBlock());
+
+        final MockHttpServletRequestBuilder request = put(url + "/" + id)
+                .contentType(MediaType.APPLICATION_JSON_VALUE)
+                .content(mapper.writeValueAsString(payload));
+
+        mvc.perform(request).andExpect(status().isOk());
+    }
+
+    @Test
+    @DisplayName("PUT /blocks/{id} - error block not found exception")
+    void putBlockNotFoundException() throws Exception {
+        final BlockRequest payload = buildBlockRequest();
+        final String id = "block-id";
+
+        Mockito.when(updateBlock.execute(Mockito.any())).thenThrow(new BlockNotFoundException("a error"));
+
+        final MockHttpServletRequestBuilder request = put(url + "/" + id)
+                .contentType(MediaType.APPLICATION_JSON_VALUE)
+                .content(mapper.writeValueAsString(payload));
+
+        mvc.perform(request).andExpect(status().isNotFound());
+    }
+
+    @Test
+    @DisplayName("PUT /blocks/{id} - error invalid date range exception")
+    void putBlockInvalidDateRangeException() throws Exception {
+        final BlockRequest payload = buildBlockRequest();
+        final String id = "block-id";
+
+        Mockito.when(updateBlock.execute(Mockito.any())).thenThrow(new InvalidDateRangeException("a error"));
+
+        final MockHttpServletRequestBuilder request = put(url + "/" + id)
+                .contentType(MediaType.APPLICATION_JSON_VALUE)
+                .content(mapper.writeValueAsString(payload));
+
+        mvc.perform(request).andExpect(status().isBadRequest());
+    }
+
+    @Test
+    @DisplayName("PUT /blocks/{id} - error overlap block exception")
+    void putBlockOverlapBlockException() throws Exception {
+        final BlockRequest payload = buildBlockRequest();
+        final String id = "block-id";
+
+        Mockito.when(updateBlock.execute(Mockito.any())).thenThrow(new OverlapBlockException("a error"));
+
+        final MockHttpServletRequestBuilder request = put(url + "/" + id)
+                .contentType(MediaType.APPLICATION_JSON_VALUE)
+                .content(mapper.writeValueAsString(payload));
+
+        mvc.perform(request).andExpect(status().isConflict());
+    }
+
+    @Test
+    @DisplayName("PUT /blocks/{id} - error unexpected internal error")
+    void putBlockBlockGenericException() throws Exception {
+        final BlockRequest payload = buildBlockRequest();
+        final String id = "block-id";
+
+        Mockito.when(updateBlock.execute(Mockito.any())).thenThrow(new BlockGenericException("a error", null));
+
+        final MockHttpServletRequestBuilder request = put(url + "/" + id)
+                .contentType(MediaType.APPLICATION_JSON_VALUE)
+                .content(mapper.writeValueAsString(payload));
 
         mvc.perform(request).andExpect(status().isInternalServerError());
     }

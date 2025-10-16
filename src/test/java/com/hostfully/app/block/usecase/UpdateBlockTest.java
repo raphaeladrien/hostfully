@@ -89,7 +89,8 @@ public class UpdateBlockTest {
         final UpdateBlockCommand updateBlockCommand = new UpdateBlockCommand(id, property, reason, startDate, endDate);
 
         when(blockRepository.existsByExternalId(updateBlockCommand.id())).thenReturn(true);
-        when(blockDateValidationService.hasValidDateRange(any(), any())).thenThrow(new InvalidDateRangeException("a error"));
+        when(blockDateValidationService.hasValidDateRange(any(), any()))
+                .thenThrow(new InvalidDateRangeException("a error"));
 
         Assertions.assertThatThrownBy(() -> subject.execute(updateBlockCommand))
                 .isInstanceOf(InvalidDateRangeException.class);
@@ -107,7 +108,8 @@ public class UpdateBlockTest {
         final UpdateBlockCommand updateBlockCommand = new UpdateBlockCommand(id, property, reason, startDate, endDate);
 
         when(blockRepository.existsByExternalId(updateBlockCommand.id())).thenReturn(true);
-        when(blockDateValidationService.hasValidDateRange(any(), any())).thenThrow(new OverlapBlockException("a error"));
+        when(blockDateValidationService.hasValidDateRange(any(), any()))
+                .thenThrow(new OverlapBlockException("a error"));
 
         Assertions.assertThatThrownBy(() -> subject.execute(updateBlockCommand))
                 .isInstanceOf(OverlapBlockException.class);

@@ -86,7 +86,8 @@ public class CreateBlockTest {
                 new CreateBlockCommand(propertyId, reason, startDate, endDate, idempotencyKey);
 
         when(idempotencyService.getResponse(idempotencyKey, Block.class)).thenReturn(Optional.empty());
-        when(blockDateValidationService.hasValidDateRange(any(), any())).thenThrow(new InvalidDateRangeException("an error"));
+        when(blockDateValidationService.hasValidDateRange(any(), any()))
+                .thenThrow(new InvalidDateRangeException("an error"));
 
         Assertions.assertThrows(InvalidDateRangeException.class, () -> subject.execute(command));
 
@@ -109,7 +110,8 @@ public class CreateBlockTest {
                 new CreateBlockCommand(propertyId, reason, startDate, endDate, idempotencyKey);
 
         when(idempotencyService.getResponse(idempotencyKey, Block.class)).thenReturn(Optional.empty());
-        when(blockDateValidationService.hasValidDateRange(any(), any())).thenThrow(new OverlapBlockException("an error"));
+        when(blockDateValidationService.hasValidDateRange(any(), any()))
+                .thenThrow(new OverlapBlockException("an error"));
 
         Assertions.assertThrows(OverlapBlockException.class, () -> subject.execute(command));
 
