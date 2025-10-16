@@ -1,0 +1,155 @@
+package com.hostfully.app.block.usecase;
+
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.*;
+
+import com.hostfully.app.block.domain.Block;
+import com.hostfully.app.block.exceptions.BlockCreationException;
+import com.hostfully.app.block.exceptions.InvalidDateRangeException;
+import com.hostfully.app.block.exceptions.OverlapBlockException;
+import com.hostfully.app.block.exceptions.PropertyNotFoundException;
+import com.hostfully.app.block.usecase.CreateBlock.CreateBlockCommand;
+import com.hostfully.app.infra.entity.BlockEntity;
+import com.hostfully.app.infra.entity.PropertyEntity;
+import com.hostfully.app.infra.repository.BlockRepository;
+import com.hostfully.app.infra.repository.PropertyRepository;
+import com.hostfully.app.shared.util.NanoIdGenerator;
+import java.time.LocalDate;
+import java.util.Optional;
+import org.assertj.core.api.SoftAssertions;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Test;
+
+public class CreateBlockTest {
+
+    private final String idGenerated = "12345-123456";
+
+    private final BlockRepository blockRepository = mock(BlockRepository.class);
+    private final PropertyRepository propertyRepository = mock(PropertyRepository.class);
+    private final NanoIdGenerator nanoIdGenerator = mock(NanoIdGenerator.class);
+
+    private final CreateBlock subject = new CreateBlock(blockRepository, propertyRepository, nanoIdGenerator);
+
+    @BeforeEach
+    public void setup() {
+        when(nanoIdGenerator.generateId()).thenReturn(idGenerated);
+    }
+
+    @Test
+    @DisplayName("should create a block, when a command is provided")
+    void createBlockTest() {
+        final String propertyId = "prop001-orx";
+        final String reason = "Dry wall maintenance";
+        final LocalDate startDate = LocalDate.of(2025, 4, 26);
+        final LocalDate endDate = LocalDate.of(2025, 4, 30);
+        final PropertyEntity propertyEntity = buildPropertyEntity(propertyId);
+
+        final CreateBlockCommand command = new CreateBlockCommand(propertyId, reason, startDate, endDate);
+
+        when(blockRepository.hasOverlapping(propertyId, startDate, endDate)).thenReturn(false);
+        when(propertyRepository.findByExternalId(propertyId)).thenReturn(Optional.of(propertyEntity));
+        when(blockRepository.save(any())).thenReturn(build(propertyEntity, reason, startDate, endDate));
+
+        final Block result = subject.execute(command);
+
+        SoftAssertions.assertSoftly(assertion -> {
+            assertion.assertThat(result).isNotNull();
+            assertion.assertThat(result.getPropertyId()).isEqualTo(propertyEntity.getExternalId());
+            assertion.assertThat(result.getReason()).isEqualTo(reason);
+            assertion.assertThat(result.getStartDate()).isEqualTo(startDate);
+            assertion.assertThat(result.getEndDate()).isEqualTo(endDate);
+        });
+
+        verify(blockRepository, times(1)).hasOverlapping(propertyId, startDate, endDate);
+        verify(propertyRepository, times(1)).findByExternalId(propertyId);
+        verify(blockRepository, times(1)).save(any());
+    }
+
+    @Test
+    @DisplayName("throws InvalidDateRangeException, when start date is greater than end date")
+    void throwsInvalidDateRangeException() {
+        final String propertyId = "prop001-orx";
+        final LocalDate startDate = LocalDate.of(2025, 4, 30);
+        final LocalDate endDate = LocalDate.of(2025, 4, 26);
+        final String reason = "Dry wall maintenance";
+
+        final CreateBlockCommand command = new CreateBlockCommand(propertyId, reason, startDate, endDate);
+
+        Assertions.assertThrows(InvalidDateRangeException.class, () -> subject.execute(command));
+
+        verify(blockRepository, times(0)).hasOverlapping(any(), any(), any());
+        verify(propertyRepository, times(0)).findByExternalId(any());
+        verify(blockRepository, times(0)).save(any());
+    }
+
+    @Test
+    @DisplayName("throws OverlapBlockException, when exists overlap between block")
+    void throwsOverlapBlockException() {
+        final String propertyId = "prop001-orx";
+        final LocalDate startDate = LocalDate.of(2025, 4, 25);
+        final LocalDate endDate = LocalDate.of(2025, 4, 30);
+        final String reason = "Dry wall maintenance";
+
+        final CreateBlockCommand command = new CreateBlockCommand(propertyId, reason, startDate, endDate);
+
+        when(blockRepository.hasOverlapping(propertyId, startDate, endDate)).thenReturn(true);
+
+        Assertions.assertThrows(OverlapBlockException.class, () -> subject.execute(command));
+
+        verify(blockRepository, times(1)).hasOverlapping(propertyId, startDate, endDate);
+        verify(propertyRepository, times(0)).findByExternalId(any());
+        verify(blockRepository, times(0)).save(any());
+    }
+
+    @Test
+    @DisplayName("throws PropertyNotFoundException, when property isn't found by id provided")
+    void throwsPropertyNotFoundException() {
+        final String propertyId = "prop001-orx";
+        final LocalDate startDate = LocalDate.of(2025, 4, 25);
+        final LocalDate endDate = LocalDate.of(2025, 4, 30);
+        final String reason = "Dry wall maintenance";
+
+        final CreateBlockCommand command = new CreateBlockCommand(propertyId, reason, startDate, endDate);
+
+        when(blockRepository.hasOverlapping(propertyId, startDate, endDate)).thenReturn(false);
+        when(propertyRepository.findByExternalId(propertyId)).thenReturn(Optional.empty());
+
+        Assertions.assertThrows(PropertyNotFoundException.class, () -> subject.execute(command));
+
+        verify(blockRepository, times(1)).hasOverlapping(propertyId, startDate, endDate);
+        verify(propertyRepository, times(1)).findByExternalId(propertyId);
+        verify(blockRepository, times(0)).save(any());
+    }
+
+    @Test
+    @DisplayName("throws BlockCreationException, when an unexpected exception occurred")
+    void throwsBlockCreationException() {
+        final String propertyId = "prop001-orx";
+        final LocalDate startDate = LocalDate.of(2025, 4, 25);
+        final LocalDate endDate = LocalDate.of(2025, 4, 30);
+        final String reason = "Dry wall maintenance";
+        final PropertyEntity propertyEntity = buildPropertyEntity(propertyId);
+
+        when(blockRepository.hasOverlapping(propertyId, startDate, endDate)).thenReturn(false);
+        when(propertyRepository.findByExternalId(propertyId)).thenReturn(Optional.of(propertyEntity));
+        when(blockRepository.save(any())).thenThrow(new RuntimeException("an exception"));
+
+        final CreateBlockCommand command = new CreateBlockCommand(propertyId, reason, startDate, endDate);
+
+        Assertions.assertThrows(BlockCreationException.class, () -> subject.execute(command));
+
+        verify(blockRepository, times(1)).hasOverlapping(propertyId, startDate, endDate);
+        verify(propertyRepository, times(1)).findByExternalId(propertyId);
+        verify(blockRepository, times(1)).save(any());
+    }
+
+    private BlockEntity build(PropertyEntity propertyEntity, String reason, LocalDate startDate, LocalDate endDate) {
+        return new BlockEntity(idGenerated, propertyEntity, reason, startDate, endDate);
+    }
+
+    private PropertyEntity buildPropertyEntity(String propertyId) {
+        return new PropertyEntity(propertyId, "a-super-description", "a-alias");
+    }
+}

@@ -8,7 +8,9 @@ CREATE TABLE IF NOT EXISTS blocks
     end_date TIMESTAMP NOT NULL,
     created_at TIMESTAMP NOT NULL,
     updated_at TIMESTAMP NOT NULL,
-    CONSTRAINT blocks_property_id_fk FOREIGN KEY (property_id) REFERENCES properties(id)
+    CONSTRAINT blocks_property_id_fk FOREIGN KEY (property_id) REFERENCES properties(id),
+    CONSTRAINT blocks_external_id_uq UNIQUE(external_id),
+    CONSTRAINT blocks_property_start_end_uq UNIQUE(property_id, start_date, end_date)
 );
 
 CREATE UNIQUE INDEX IF NOT EXISTS blocks_external_id_idx ON blocks (external_id);
