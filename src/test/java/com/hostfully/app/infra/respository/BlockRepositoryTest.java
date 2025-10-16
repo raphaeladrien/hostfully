@@ -10,6 +10,7 @@ import java.util.stream.Stream;
 import org.assertj.core.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;
@@ -57,6 +58,21 @@ public class BlockRepositoryTest {
 
         Assertions.assertThat(blockRepository.hasOverlapping(propertyId, startDate, endDate))
                 .isTrue();
+    }
+
+    @Test
+    @DisplayName("should delete block by external id provided")
+    void deleteBlockByExternalId() {
+        final String id = "qwerty-1234";
+        createAndSaveBlock(id, property1, LocalDate.of(2025, 1, 5), LocalDate.of(2025, 1, 15));
+
+        Assertions.assertThat(blockRepository.deleteByExternalId(id)).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("returns 0 when no record to delete")
+    void returnsZeroWhenNoRecordToDelete() {
+        Assertions.assertThat(blockRepository.deleteByExternalId("my-amazing")).isEqualTo(0);
     }
 
     private void createAndSaveBlock(

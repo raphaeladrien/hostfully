@@ -5,7 +5,7 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
 
 import com.hostfully.app.block.domain.Block;
-import com.hostfully.app.block.exceptions.BlockCreationException;
+import com.hostfully.app.block.exceptions.BlockGenericException;
 import com.hostfully.app.block.exceptions.InvalidDateRangeException;
 import com.hostfully.app.block.exceptions.OverlapBlockException;
 import com.hostfully.app.block.exceptions.PropertyNotFoundException;
@@ -150,8 +150,8 @@ public class CreateBlockTest {
     }
 
     @Test
-    @DisplayName("throws BlockCreationException, when an unexpected exception occurred")
-    void throwsBlockCreationException() {
+    @DisplayName("throws BlockGenericException, when an unexpected exception occurred")
+    void throwsBlockGenericException() {
         final String propertyId = "prop001-orx";
         final LocalDate startDate = LocalDate.of(2025, 4, 25);
         final LocalDate endDate = LocalDate.of(2025, 4, 30);
@@ -167,7 +167,7 @@ public class CreateBlockTest {
         when(propertyRepository.findByExternalId(propertyId)).thenReturn(Optional.of(propertyEntity));
         when(blockRepository.save(any())).thenThrow(new RuntimeException("an exception"));
 
-        Assertions.assertThrows(BlockCreationException.class, () -> subject.execute(command));
+        Assertions.assertThrows(BlockGenericException.class, () -> subject.execute(command));
 
         verify(idempotencyService, times(1)).getResponse(idempotencyKey, Block.class);
         verify(blockRepository, times(1)).hasOverlapping(propertyId, startDate, endDate);

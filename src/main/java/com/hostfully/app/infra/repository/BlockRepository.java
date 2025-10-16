@@ -1,8 +1,10 @@
 package com.hostfully.app.infra.repository;
 
 import com.hostfully.app.infra.entity.BlockEntity;
+import jakarta.transaction.Transactional;
 import java.time.LocalDate;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.stereotype.Repository;
 
@@ -14,4 +16,9 @@ public interface BlockRepository extends JpaRepository<BlockEntity, Long> {
             + "          AND b.startDate < :endDate"
             + "          AND b.endDate > :startDate")
     Boolean hasOverlapping(String propertyId, LocalDate startDate, LocalDate endDate);
+
+    @Modifying
+    @Transactional
+    @Query("DELETE FROM BlockEntity b WHERE b.externalId = :externalId")
+    int deleteByExternalId(String externalId);
 }

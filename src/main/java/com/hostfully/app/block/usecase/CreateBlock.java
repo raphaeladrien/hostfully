@@ -1,7 +1,7 @@
 package com.hostfully.app.block.usecase;
 
 import com.hostfully.app.block.domain.Block;
-import com.hostfully.app.block.exceptions.BlockCreationException;
+import com.hostfully.app.block.exceptions.BlockGenericException;
 import com.hostfully.app.block.exceptions.InvalidDateRangeException;
 import com.hostfully.app.block.exceptions.OverlapBlockException;
 import com.hostfully.app.block.exceptions.PropertyNotFoundException;
@@ -53,7 +53,7 @@ public class CreateBlock {
             return blockResult;
         } catch (Exception ex) {
             log.error("Failed to create a block: {}", block, ex);
-            throw new BlockCreationException("Unexpected error while creating block", ex);
+            throw new BlockGenericException("Unexpected error while creating block", ex);
         }
     }
 

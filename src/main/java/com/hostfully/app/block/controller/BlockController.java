@@ -4,6 +4,7 @@ import com.hostfully.app.block.controller.dto.BlockRequest;
 import com.hostfully.app.block.domain.Block;
 import com.hostfully.app.block.usecase.CreateBlock;
 import com.hostfully.app.block.usecase.CreateBlock.CreateBlockCommand;
+import com.hostfully.app.block.usecase.DeleteBlock;
 import jakarta.validation.Valid;
 import java.util.UUID;
 import lombok.AllArgsConstructor;
@@ -17,6 +18,7 @@ import org.springframework.web.bind.annotation.*;
 public class BlockController {
 
     private CreateBlock createBlock;
+    private DeleteBlock deleteBlock;
 
     @PostMapping
     public ResponseEntity<Block> createBlock(
@@ -25,5 +27,11 @@ public class BlockController {
         final Block block = createBlock.execute(new CreateBlockCommand(
                 request.property(), request.reason(), request.startDate(), request.endDate(), idempotencyKey));
         return ResponseEntity.status(HttpStatus.CREATED).body(block);
+    }
+
+    @DeleteMapping("/{id}")
+    public ResponseEntity<Void> deleteUser(@PathVariable String id) {
+        deleteBlock.execute(id);
+        return ResponseEntity.noContent().build();
     }
 }

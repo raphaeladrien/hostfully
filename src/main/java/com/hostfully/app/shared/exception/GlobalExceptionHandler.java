@@ -1,6 +1,6 @@
 package com.hostfully.app.shared.exception;
 
-import com.hostfully.app.block.exceptions.BlockCreationException;
+import com.hostfully.app.block.exceptions.BlockGenericException;
 import com.hostfully.app.block.exceptions.InvalidDateRangeException;
 import com.hostfully.app.block.exceptions.OverlapBlockException;
 import com.hostfully.app.block.exceptions.PropertyNotFoundException;
@@ -69,9 +69,9 @@ public class GlobalExceptionHandler {
         return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(problemDetail);
     }
 
-    @ExceptionHandler(BlockCreationException.class)
+    @ExceptionHandler(BlockGenericException.class)
     public ResponseEntity<ProblemDetail> handleBlockCreationException(
-            BlockCreationException ex, HttpServletRequest request) {
+            BlockGenericException ex, HttpServletRequest request) {
 
         ProblemDetail problemDetail =
                 ProblemDetail.forStatusAndDetail(HttpStatus.INTERNAL_SERVER_ERROR, ex.getMessage());

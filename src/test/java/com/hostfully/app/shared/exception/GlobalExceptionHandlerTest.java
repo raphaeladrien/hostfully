@@ -3,7 +3,7 @@ package com.hostfully.app.shared.exception;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.when;
 
-import com.hostfully.app.block.exceptions.BlockCreationException;
+import com.hostfully.app.block.exceptions.BlockGenericException;
 import com.hostfully.app.block.exceptions.InvalidDateRangeException;
 import com.hostfully.app.block.exceptions.OverlapBlockException;
 import com.hostfully.app.block.exceptions.PropertyNotFoundException;
@@ -111,7 +111,7 @@ class GlobalExceptionHandlerTest {
     @Test
     @DisplayName("Should handle BlockCreationException and return internal server error")
     void shouldHandleBlockCreationException() {
-        final BlockCreationException exception = new BlockCreationException("Failed to create block", null);
+        final BlockGenericException exception = new BlockGenericException("Failed to create block", null);
 
         final ResponseEntity<ProblemDetail> response =
                 globalExceptionHandler.handleBlockCreationException(exception, request);
