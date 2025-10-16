@@ -1,9 +1,6 @@
 package com.hostfully.app.shared.exception;
 
-import com.hostfully.app.block.exceptions.BlockGenericException;
-import com.hostfully.app.block.exceptions.InvalidDateRangeException;
-import com.hostfully.app.block.exceptions.OverlapBlockException;
-import com.hostfully.app.block.exceptions.PropertyNotFoundException;
+import com.hostfully.app.block.exceptions.*;
 import jakarta.servlet.http.HttpServletRequest;
 import java.net.URI;
 import java.time.Instant;
@@ -138,5 +135,19 @@ public class GlobalExceptionHandler {
         problemDetail.setProperty("timestamp", Instant.now());
 
         return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(problemDetail);
+    }
+
+    @ExceptionHandler(BlockNotFoundException.class)
+    public ResponseEntity<ProblemDetail> handleBlockNotFoundException(
+            BlockNotFoundException ex, HttpServletRequest request) {
+
+        ProblemDetail problemDetail = ProblemDetail.forStatusAndDetail(HttpStatus.NOT_FOUND, ex.getMessage());
+
+        problemDetail.setType(URI.create(PROBLEM_BASE_URL));
+        problemDetail.setTitle(ex.getTitle());
+        problemDetail.setInstance(URI.create(request.getRequestURI()));
+        problemDetail.setProperty("timestamp", Instant.now());
+
+        return ResponseEntity.status(HttpStatus.NOT_FOUND).body(problemDetail);
     }
 }

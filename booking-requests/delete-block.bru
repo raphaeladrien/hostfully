@@ -1,0 +1,29 @@
+meta {
+  name: delete-block
+  type: http
+  seq: 4
+}
+
+delete {
+  url: http://localhost:8080/v1/blocks/:id
+  body: none
+  auth: inherit
+}
+
+params:path {
+  id: rzB8hS6w9nmX
+}
+
+body:json {
+  {
+    "property": "AMAZINGHOUSE",
+    "reason": "painting",
+    "alias": "a alias",
+    "startDate": "2025-11-16",
+    "endDate": "2025-11-17"
+  }
+}
+
+settings {
+  encodeUrl: true
+}

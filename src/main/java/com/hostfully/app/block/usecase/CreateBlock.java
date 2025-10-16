@@ -2,9 +2,8 @@ package com.hostfully.app.block.usecase;
 
 import com.hostfully.app.block.domain.Block;
 import com.hostfully.app.block.exceptions.BlockGenericException;
-import com.hostfully.app.block.exceptions.InvalidDateRangeException;
-import com.hostfully.app.block.exceptions.OverlapBlockException;
 import com.hostfully.app.block.exceptions.PropertyNotFoundException;
+import com.hostfully.app.block.service.BlockDateValidationService;
 import com.hostfully.app.infra.entity.PropertyEntity;
 import com.hostfully.app.infra.mapper.BlockMapper;
 import com.hostfully.app.infra.repository.BlockRepository;
@@ -30,6 +29,7 @@ public class CreateBlock {
     private final PropertyRepository propertyRepository;
     private final NanoIdGenerator nanoIdGenerator;
     private final IdempotencyService idempotencyService;
+    private final BlockDateValidationService blockDateValidationService;
 
     @Transactional
     public Block execute(final CreateBlockCommand createBlockCommand) {
@@ -44,7 +44,7 @@ public class CreateBlock {
                 createBlockCommand.startDate,
                 createBlockCommand.endDate);
 
-        hasValidDateRange(block);
+        blockDateValidationService.hasValidDateRange(block, false);
         final PropertyEntity propertyEntity = getProperty(block.getPropertyId());
         try {
             final Block blockResult =
@@ -55,16 +55,6 @@ public class CreateBlock {
             log.error("Failed to create a block: {}", block, ex);
             throw new BlockGenericException("Unexpected error while creating block", ex);
         }
-    }
-
-    private void hasValidDateRange(final Block block) {
-        final LocalDate endDate = block.getEndDate();
-        final LocalDate startDate = block.getStartDate();
-        if (!endDate.isAfter(startDate)) {
-            if (!startDate.isEqual(endDate)) throw new InvalidDateRangeException("Start date must be before end date");
-        }
-        if (blockRepository.hasOverlapping(block.getPropertyId(), startDate, endDate))
-            throw new OverlapBlockException("Block already created for this property in the timeframe provided");
     }
 
     private PropertyEntity getProperty(final String propertyId) {

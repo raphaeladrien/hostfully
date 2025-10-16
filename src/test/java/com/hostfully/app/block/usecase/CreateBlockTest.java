@@ -9,6 +9,7 @@ import com.hostfully.app.block.exceptions.BlockGenericException;
 import com.hostfully.app.block.exceptions.InvalidDateRangeException;
 import com.hostfully.app.block.exceptions.OverlapBlockException;
 import com.hostfully.app.block.exceptions.PropertyNotFoundException;
+import com.hostfully.app.block.service.BlockDateValidationService;
 import com.hostfully.app.block.usecase.CreateBlock.CreateBlockCommand;
 import com.hostfully.app.infra.entity.BlockEntity;
 import com.hostfully.app.infra.entity.PropertyEntity;
@@ -25,41 +26,40 @@ import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
-import org.junit.jupiter.params.provider.MethodSource;
 
 public class CreateBlockTest {
 
     private final String idGenerated = "12345-123456";
+    final LocalDate startDate = LocalDate.of(2025, 4, 25);
+    final LocalDate endDate = LocalDate.of(2025, 4, 30);
+    final String propertyId = "prop001-orx";
+    final String reason = "Dry wall maintenance";
+    final PropertyEntity propertyEntity = buildPropertyEntity(propertyId);
+    final UUID idempotencyKey = UUID.randomUUID();
 
     private final BlockRepository blockRepository = mock(BlockRepository.class);
     private final PropertyRepository propertyRepository = mock(PropertyRepository.class);
     private final NanoIdGenerator nanoIdGenerator = mock(NanoIdGenerator.class);
     private final IdempotencyService idempotencyService = mock(IdempotencyService.class);
+    private final BlockDateValidationService blockDateValidationService = mock(BlockDateValidationService.class);
 
-    private final CreateBlock subject =
-            new CreateBlock(blockRepository, propertyRepository, nanoIdGenerator, idempotencyService);
+    private final CreateBlock subject = new CreateBlock(
+            blockRepository, propertyRepository, nanoIdGenerator, idempotencyService, blockDateValidationService);
 
     @BeforeEach
     public void setup() {
         when(nanoIdGenerator.generateId()).thenReturn(idGenerated);
     }
 
-    @ParameterizedTest
-    @MethodSource("provideRanges")
+    @Test
     @DisplayName("should create a block, when a command is provided")
-    void createBlockTest(final LocalDate startDate, final LocalDate endDate) {
-        final String propertyId = "prop001-orx";
-        final String reason = "Dry wall maintenance";
-        final PropertyEntity propertyEntity = buildPropertyEntity(propertyId);
-        final UUID idempotencyKey = UUID.randomUUID();
-
+    void createBlockTest() {
         final CreateBlockCommand command =
                 new CreateBlockCommand(propertyId, reason, startDate, endDate, idempotencyKey);
 
         when(idempotencyService.getResponse(idempotencyKey, Block.class)).thenReturn(Optional.empty());
-        when(blockRepository.hasOverlapping(propertyId, startDate, endDate)).thenReturn(false);
+        when(blockDateValidationService.hasValidDateRange(any(), any())).thenReturn(true);
         when(propertyRepository.findByExternalId(propertyId)).thenReturn(Optional.of(propertyEntity));
         when(blockRepository.save(any())).thenReturn(build(propertyEntity, reason, startDate, endDate));
 
@@ -74,7 +74,7 @@ public class CreateBlockTest {
         });
 
         verify(idempotencyService, times(1)).getResponse(idempotencyKey, Block.class);
-        verify(blockRepository, times(1)).hasOverlapping(propertyId, startDate, endDate);
+        verify(blockDateValidationService, times(1)).hasValidDateRange(any(), any());
         verify(propertyRepository, times(1)).findByExternalId(propertyId);
         verify(blockRepository, times(1)).save(any());
     }
@@ -82,21 +82,16 @@ public class CreateBlockTest {
     @Test
     @DisplayName("throws InvalidDateRangeException, when start date is greater than end date")
     void throwsInvalidDateRangeException() {
-        final String propertyId = "prop001-orx";
-        final LocalDate startDate = LocalDate.of(2025, 4, 30);
-        final LocalDate endDate = LocalDate.of(2025, 4, 26);
-        final String reason = "Dry wall maintenance";
-        final UUID idempotencyKey = UUID.randomUUID();
-
         final CreateBlockCommand command =
                 new CreateBlockCommand(propertyId, reason, startDate, endDate, idempotencyKey);
 
         when(idempotencyService.getResponse(idempotencyKey, Block.class)).thenReturn(Optional.empty());
+        when(blockDateValidationService.hasValidDateRange(any(), any())).thenThrow(new InvalidDateRangeException("an error"));
 
         Assertions.assertThrows(InvalidDateRangeException.class, () -> subject.execute(command));
 
         verify(idempotencyService, times(1)).getResponse(idempotencyKey, Block.class);
-        verify(blockRepository, times(0)).hasOverlapping(any(), any(), any());
+        verify(blockDateValidationService, times(1)).hasValidDateRange(any(), any());
         verify(propertyRepository, times(0)).findByExternalId(any());
         verify(blockRepository, times(0)).save(any());
     }
@@ -114,13 +109,12 @@ public class CreateBlockTest {
                 new CreateBlockCommand(propertyId, reason, startDate, endDate, idempotencyKey);
 
         when(idempotencyService.getResponse(idempotencyKey, Block.class)).thenReturn(Optional.empty());
-
-        when(blockRepository.hasOverlapping(propertyId, startDate, endDate)).thenReturn(true);
+        when(blockDateValidationService.hasValidDateRange(any(), any())).thenThrow(new OverlapBlockException("an error"));
 
         Assertions.assertThrows(OverlapBlockException.class, () -> subject.execute(command));
 
         verify(idempotencyService, times(1)).getResponse(idempotencyKey, Block.class);
-        verify(blockRepository, times(1)).hasOverlapping(propertyId, startDate, endDate);
+        verify(blockDateValidationService, times(1)).hasValidDateRange(any(), any());
         verify(propertyRepository, times(0)).findByExternalId(any());
         verify(blockRepository, times(0)).save(any());
     }
@@ -138,13 +132,13 @@ public class CreateBlockTest {
                 new CreateBlockCommand(propertyId, reason, startDate, endDate, idempotencyKey);
 
         when(idempotencyService.getResponse(idempotencyKey, Block.class)).thenReturn(Optional.empty());
-        when(blockRepository.hasOverlapping(propertyId, startDate, endDate)).thenReturn(false);
+        when(blockDateValidationService.hasValidDateRange(any(), any())).thenReturn(true);
         when(propertyRepository.findByExternalId(propertyId)).thenReturn(Optional.empty());
 
         Assertions.assertThrows(PropertyNotFoundException.class, () -> subject.execute(command));
 
         verify(idempotencyService, times(1)).getResponse(idempotencyKey, Block.class);
-        verify(blockRepository, times(1)).hasOverlapping(propertyId, startDate, endDate);
+        verify(blockDateValidationService, times(1)).hasValidDateRange(any(), any());
         verify(propertyRepository, times(1)).findByExternalId(propertyId);
         verify(blockRepository, times(0)).save(any());
     }
@@ -163,14 +157,14 @@ public class CreateBlockTest {
                 new CreateBlockCommand(propertyId, reason, startDate, endDate, idempotencyKey);
 
         when(idempotencyService.getResponse(idempotencyKey, Block.class)).thenReturn(Optional.empty());
-        when(blockRepository.hasOverlapping(propertyId, startDate, endDate)).thenReturn(false);
+        when(blockDateValidationService.hasValidDateRange(any(), any())).thenReturn(true);
         when(propertyRepository.findByExternalId(propertyId)).thenReturn(Optional.of(propertyEntity));
         when(blockRepository.save(any())).thenThrow(new RuntimeException("an exception"));
 
         Assertions.assertThrows(BlockGenericException.class, () -> subject.execute(command));
 
         verify(idempotencyService, times(1)).getResponse(idempotencyKey, Block.class);
-        verify(blockRepository, times(1)).hasOverlapping(propertyId, startDate, endDate);
+        verify(blockDateValidationService, times(1)).hasValidDateRange(any(), any());
         verify(propertyRepository, times(1)).findByExternalId(propertyId);
         verify(blockRepository, times(1)).save(any());
     }
@@ -201,7 +195,7 @@ public class CreateBlockTest {
         });
 
         verify(idempotencyService, times(1)).getResponse(idempotencyKey, Block.class);
-        verify(blockRepository, times(0)).hasOverlapping(propertyId, startDate, endDate);
+        verify(blockDateValidationService, times(0)).hasValidDateRange(any(), any());
         verify(propertyRepository, times(0)).findByExternalId(propertyId);
         verify(blockRepository, times(0)).save(any());
     }
@@ -223,7 +217,7 @@ public class CreateBlockTest {
         Assertions.assertThrows(RuntimeException.class, () -> subject.execute(command));
 
         verify(idempotencyService, times(1)).getResponse(idempotencyKey, Block.class);
-        verify(blockRepository, times(0)).hasOverlapping(propertyId, startDate, endDate);
+        verify(blockDateValidationService, times(0)).hasValidDateRange(any(), any());
         verify(propertyRepository, times(0)).findByExternalId(propertyId);
         verify(blockRepository, times(0)).save(any());
     }

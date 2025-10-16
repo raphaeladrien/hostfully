@@ -3,10 +3,7 @@ package com.hostfully.app.shared.exception;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.when;
 
-import com.hostfully.app.block.exceptions.BlockGenericException;
-import com.hostfully.app.block.exceptions.InvalidDateRangeException;
-import com.hostfully.app.block.exceptions.OverlapBlockException;
-import com.hostfully.app.block.exceptions.PropertyNotFoundException;
+import com.hostfully.app.block.exceptions.*;
 import jakarta.servlet.http.HttpServletRequest;
 import java.lang.reflect.Method;
 import java.net.URI;
@@ -206,6 +203,26 @@ class GlobalExceptionHandlerTest {
         assertThat(problemDetail.getTitle()).isEqualTo("Missing mandatory header");
         assertThat(problemDetail.getDetail())
                 .isEqualTo("Required request header 'a-header' for method parameter type String is not present");
+        assertThat(problemDetail.getInstance()).isEqualTo(URI.create(TEST_REQUEST_URI));
+        assertThat(problemDetail.getType()).isEqualTo(URI.create("about:blank"));
+        assertThat(problemDetail.getProperties()).containsKey("timestamp");
+    }
+
+    @Test
+    @DisplayName("Should handle BlockNotFoundException and return bad request status")
+    void shouldHandleBlockNotFoundException() {
+        final BlockNotFoundException exception = new BlockNotFoundException("Block not found by id provided");
+
+        final ResponseEntity<ProblemDetail> response =
+                globalExceptionHandler.handleBlockNotFoundException(exception, request);
+
+        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.NOT_FOUND);
+        assertThat(response.getBody()).isNotNull();
+
+        final ProblemDetail problemDetail = response.getBody();
+        assertThat(problemDetail.getStatus()).isEqualTo(HttpStatus.NOT_FOUND.value());
+        assertThat(problemDetail.getTitle()).isEqualTo(exception.getTitle());
+        assertThat(problemDetail.getDetail()).isEqualTo("Block not found by id provided");
         assertThat(problemDetail.getInstance()).isEqualTo(URI.create(TEST_REQUEST_URI));
         assertThat(problemDetail.getType()).isEqualTo(URI.create("about:blank"));
         assertThat(problemDetail.getProperties()).containsKey("timestamp");

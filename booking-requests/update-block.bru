@@ -1,17 +1,17 @@
 meta {
-  name: create-block
+  name: update-block
   type: http
-  seq: 1
+  seq: 3
 }
 
-post {
-  url: http://localhost:8080/v1/blocks
+put {
+  url: http://localhost:8080/v1/blocks/:id
   body: json
   auth: inherit
 }
 
-headers {
-  Idempotency-Key: {{$guid}}
+params:path {
+  id: I7YDpnn3HcOu
 }
 
 body:json {
@@ -19,8 +19,8 @@ body:json {
     "property": "AMAZINGHOUSE",
     "reason": "painting",
     "alias": "a alias",
-    "startDate": "2025-11-01",
-    "endDate": "2025-11-10"
+    "startDate": "2025-11-02",
+    "endDate": "2025-11-03"
   }
 }
 
