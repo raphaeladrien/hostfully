@@ -1,0 +1,29 @@
+meta {
+  name: create-block
+  type: http
+  seq: 1
+}
+
+post {
+  url: http://localhost:8080/v1/blocks
+  body: json
+  auth: inherit
+}
+
+headers {
+  Idempotency-Key: 6cb4fced-459a-4f30-bf83-f53fd0390781
+}
+
+body:json {
+  {
+    "property": "nHGRyULERXB0",
+    "reason": "a super reason",
+    "alias": "a alias",
+    "startDate": "2025-11-18",
+    "endDate": "2025-11-19"
+  }
+}
+
+settings {
+  encodeUrl: true
+}

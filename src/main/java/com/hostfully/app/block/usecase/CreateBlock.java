@@ -60,7 +60,9 @@ public class CreateBlock {
     private void hasValidDateRange(final Block block) {
         final LocalDate endDate = block.getEndDate();
         final LocalDate startDate = block.getStartDate();
-        if (endDate.isBefore(startDate)) throw new InvalidDateRangeException("Start date must be before end date");
+        if (!endDate.isAfter(startDate)) {
+            if (!startDate.isEqual(endDate)) throw new InvalidDateRangeException("Start date must be before end date");
+        }
         if (blockRepository.hasOverlapping(block.getPropertyId(), startDate, endDate))
             throw new OverlapBlockException("Block already created for this property in the timeframe provided");
     }

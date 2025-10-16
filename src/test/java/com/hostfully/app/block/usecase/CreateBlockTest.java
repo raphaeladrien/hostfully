@@ -1,5 +1,6 @@
 package com.hostfully.app.block.usecase;
 
+import static org.junit.jupiter.params.provider.Arguments.arguments;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
 
@@ -18,11 +19,15 @@ import com.hostfully.app.shared.util.NanoIdGenerator;
 import java.time.LocalDate;
 import java.util.Optional;
 import java.util.UUID;
+import java.util.stream.Stream;
 import org.assertj.core.api.SoftAssertions;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.Arguments;
+import org.junit.jupiter.params.provider.MethodSource;
 
 public class CreateBlockTest {
 
@@ -41,13 +46,12 @@ public class CreateBlockTest {
         when(nanoIdGenerator.generateId()).thenReturn(idGenerated);
     }
 
-    @Test
+    @ParameterizedTest
+    @MethodSource("provideRanges")
     @DisplayName("should create a block, when a command is provided")
-    void createBlockTest() {
+    void createBlockTest(final LocalDate startDate, final LocalDate endDate) {
         final String propertyId = "prop001-orx";
         final String reason = "Dry wall maintenance";
-        final LocalDate startDate = LocalDate.of(2025, 4, 26);
-        final LocalDate endDate = LocalDate.of(2025, 4, 30);
         final PropertyEntity propertyEntity = buildPropertyEntity(propertyId);
         final UUID idempotencyKey = UUID.randomUUID();
 
@@ -222,6 +226,12 @@ public class CreateBlockTest {
         verify(blockRepository, times(0)).hasOverlapping(propertyId, startDate, endDate);
         verify(propertyRepository, times(0)).findByExternalId(propertyId);
         verify(blockRepository, times(0)).save(any());
+    }
+
+    private static Stream<Arguments> provideRanges() {
+        return Stream.of(
+                arguments(LocalDate.of(2025, 1, 15), LocalDate.of(2025, 1, 15)),
+                arguments(LocalDate.of(2025, 1, 1), LocalDate.of(2025, 1, 5)));
     }
 
     private BlockEntity build(PropertyEntity propertyEntity, String reason, LocalDate startDate, LocalDate endDate) {

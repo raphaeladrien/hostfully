@@ -1,7 +1,7 @@
 package com.hostfully.app.runner;
 
-import com.hostfully.app.property.usecase.CreateProperty;
-import com.hostfully.app.property.usecase.CreateProperty.CreatePropertyCommand;
+import com.hostfully.app.infra.entity.PropertyEntity;
+import com.hostfully.app.infra.repository.PropertyRepository;
 import jakarta.transaction.Transactional;
 import java.util.List;
 import lombok.AllArgsConstructor;
@@ -12,15 +12,16 @@ import org.springframework.stereotype.Component;
 @AllArgsConstructor
 public class PropertyRunner implements CommandLineRunner {
 
-    private final CreateProperty createProperty;
+    private final PropertyRepository propertyRepository;
 
     @Override
     @Transactional
     public void run(String... args) throws Exception {
-        final List<CreatePropertyCommand> commands = List.of(
-                new CreatePropertyCommand("a cozy house", "amazing"),
-                new CreatePropertyCommand("amazing house", "oasis in portland/or"));
 
-        commands.forEach(createProperty::execute);
+        final List<PropertyEntity> properties = List.of(
+                new PropertyEntity("AMAZINGHOUSE", "a cozy house", "Jewel of Portland"),
+                new PropertyEntity("FLOREST", "a cozy house", "Jewel of Montana"));
+
+        propertyRepository.saveAll(properties);
     }
 }

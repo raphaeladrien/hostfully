@@ -9,7 +9,7 @@ CREATE TABLE IF NOT EXISTS blocks
     created_at TIMESTAMP NOT NULL,
     updated_at TIMESTAMP NOT NULL,
     CONSTRAINT blocks_property_id_fk FOREIGN KEY (property_id) REFERENCES properties(id),
-    CONSTRAINT blocks_chk_dates CHECK (end_date > start_date),
+    CONSTRAINT blocks_chk_dates CHECK (end_date >= start_date),
     CONSTRAINT blocks_property_start_end_uq UNIQUE(property_id, start_date, end_date)
 );
 

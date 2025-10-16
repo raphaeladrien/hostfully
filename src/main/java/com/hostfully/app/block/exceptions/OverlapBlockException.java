@@ -4,4 +4,8 @@ public class OverlapBlockException extends RuntimeException {
     public OverlapBlockException(String msg) {
         super(msg);
     }
+
+    public String getTitle() {
+        return "Block already scheduled for this property";
+    }
 }
