@@ -1,7 +1,7 @@
 CREATE TABLE IF NOT EXISTS properties
 (
     id BIGINT PRIMARY KEY,
-    external_id VARCHAR(12) NOT NULL,
+    external_id VARCHAR(12) NOT NULL UNIQUE,
     description VARCHAR(250) NOT NULL,
     alias VARCHAR(50) NOT NULL,
     created_at TIMESTAMP NOT NULL,
