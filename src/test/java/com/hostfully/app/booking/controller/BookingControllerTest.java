@@ -1,13 +1,20 @@
 package com.hostfully.app.booking.controller;
 
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
+
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.hostfully.app.block.exceptions.BlockGenericException;
 import com.hostfully.app.block.exceptions.OverlapBlockException;
 import com.hostfully.app.booking.controller.dto.BookingRequest;
 import com.hostfully.app.booking.domain.Booking;
 import com.hostfully.app.booking.usecase.CreateBooking;
+import com.hostfully.app.booking.usecase.DeleteBooking;
 import com.hostfully.app.infra.exception.InvalidDateRangeException;
 import com.hostfully.app.infra.exception.PropertyNotFoundException;
+import java.time.LocalDate;
+import java.util.UUID;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
@@ -18,12 +25,6 @@ import org.springframework.http.MediaType;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.request.MockHttpServletRequestBuilder;
-
-import java.time.LocalDate;
-import java.util.UUID;
-
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 @SpringBootTest
 @AutoConfigureMockMvc
@@ -38,11 +39,14 @@ public class BookingControllerTest {
     @MockitoBean
     private CreateBooking createBooking;
 
+    @MockitoBean
+    private DeleteBooking deleteBooking;
+
     private final String url = "/v1/bookings";
 
     private final String guest = "Galadriel";
     private final LocalDate startDate = LocalDate.now();
-    private final LocalDate endDate = LocalDate.now();
+    private final LocalDate endDate = LocalDate.now().plusDays(2);
 
     @Test
     @DisplayName("POST /bookings - booking created successfully")
@@ -132,8 +136,30 @@ public class BookingControllerTest {
         mvc.perform(request).andExpect(status().isInternalServerError());
     }
 
+    @Test
+    @DisplayName("DELETE /bookings/{id} - block deleted")
+    void deleteBooking() throws Exception {
+        final String id = "a-super-id";
+        Mockito.when(deleteBooking.execute(id)).thenReturn(true);
+
+        final MockHttpServletRequestBuilder request = delete(url + "/" + id);
+
+        mvc.perform(request).andExpect(status().isNoContent());
+    }
+
+    @Test
+    @DisplayName("DELETE /bookings/{id} - error unexpected internal error")
+    void deleteGenericBookingCreationException() throws Exception {
+        final String id = "a-super-id";
+        Mockito.when(deleteBooking.execute(id)).thenThrow(new BlockGenericException("a error", null));
+
+        final MockHttpServletRequestBuilder request = delete(url + "/" + id);
+
+        mvc.perform(request).andExpect(status().isInternalServerError());
+    }
+
     private BookingRequest buildBookingRequest() {
-        return new BookingRequest("AMAZINGHOUSE",  guest, 2, startDate, endDate);
+        return new BookingRequest("AMAZINGHOUSE", guest, 2, startDate, endDate);
     }
 
     private Booking buildBooking() {

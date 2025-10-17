@@ -9,8 +9,10 @@ import com.hostfully.app.infra.entity.PropertyEntity;
 import com.hostfully.app.infra.repository.BookingRepository;
 import java.time.LocalDate;
 import java.util.stream.Stream;
+import org.assertj.core.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;
@@ -86,6 +88,23 @@ public class BookingRepositoryTest {
         boolean exists = bookingRepository.hasOverlapping(propertyId, startDate, endDate, null);
 
         assertThat(exists).isFalse();
+    }
+
+    @Test
+    @DisplayName("should delete booking by external id provided")
+    void deleteBlockByExternalId() {
+        final String id = "qwerty-1234";
+        createAndSaveBooking(
+                id, property1, BookingStatus.CONFIRMED, LocalDate.of(2025, 1, 2), LocalDate.of(2025, 1, 5));
+
+        Assertions.assertThat(bookingRepository.deleteByExternalId(id)).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("returns 0 when no record to delete")
+    void returnsZeroWhenNoRecordToDelete() {
+        Assertions.assertThat(bookingRepository.deleteByExternalId("my-amazing"))
+                .isEqualTo(0);
     }
 
     private static Stream<Arguments> provideOverlapRanges() {

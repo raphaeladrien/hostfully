@@ -1,8 +1,10 @@
 package com.hostfully.app.infra.repository;
 
 import com.hostfully.app.infra.entity.BookingEntity;
+import jakarta.transaction.Transactional;
 import java.time.LocalDate;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.stereotype.Repository;
 
@@ -16,4 +18,9 @@ public interface BookingRepository extends JpaRepository<BookingEntity, Long> {
             + "   AND b.startDate <= :endDate"
             + "   AND b.endDate >= :startDate")
     boolean hasOverlapping(String propertyId, LocalDate startDate, LocalDate endDate, String bookingId);
+
+    @Modifying
+    @Transactional
+    @Query("DELETE FROM BookingEntity b WHERE b.externalId = :externalId")
+    int deleteByExternalId(String externalId);
 }

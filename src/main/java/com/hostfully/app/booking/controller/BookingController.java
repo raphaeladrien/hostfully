@@ -4,6 +4,7 @@ import com.hostfully.app.booking.controller.dto.BookingRequest;
 import com.hostfully.app.booking.domain.Booking;
 import com.hostfully.app.booking.usecase.CreateBooking;
 import com.hostfully.app.booking.usecase.CreateBooking.CreateBookingCommand;
+import com.hostfully.app.booking.usecase.DeleteBooking;
 import jakarta.validation.Valid;
 import java.util.UUID;
 import lombok.AllArgsConstructor;
@@ -17,6 +18,7 @@ import org.springframework.web.bind.annotation.*;
 public class BookingController {
 
     private CreateBooking createBooking;
+    private DeleteBooking deleteBooking;
 
     @PostMapping
     public ResponseEntity<Booking> createBlock(
@@ -30,5 +32,11 @@ public class BookingController {
                 request.numberGuest(),
                 idempotencyKey));
         return ResponseEntity.status(HttpStatus.CREATED).body(booking);
+    }
+
+    @DeleteMapping("/{id}")
+    public ResponseEntity<Void> deleteUser(@PathVariable String id) {
+        deleteBooking.execute(id);
+        return ResponseEntity.noContent().build();
     }
 }

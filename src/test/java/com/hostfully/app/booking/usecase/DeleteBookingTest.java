@@ -1,23 +1,24 @@
-package com.hostfully.app.block.usecase;
+package com.hostfully.app.booking.usecase;
 
-import static org.mockito.Mockito.*;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
 
 import com.hostfully.app.block.exceptions.BlockGenericException;
-import com.hostfully.app.infra.repository.BlockRepository;
+import com.hostfully.app.infra.repository.BookingRepository;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
-public class DeleteBlockTest {
+public class DeleteBookingTest {
 
-    private final BlockRepository blockRepository = mock(BlockRepository.class);
-    private final DeleteBlock subject = new DeleteBlock(blockRepository);
+    private final BookingRepository bookingRepository = mock(BookingRepository.class);
+    private final DeleteBooking subject = new DeleteBooking(bookingRepository);
 
     @Test
     @DisplayName("should delete a block, when a ID is provided")
     void shouldDeleteABlock() {
         final String externalId = "a-id-spec";
-        when(blockRepository.deleteByExternalId(externalId)).thenReturn(1);
+        when(bookingRepository.deleteByExternalId(externalId)).thenReturn(1);
         Assertions.assertTrue(subject.execute(externalId));
     }
 
@@ -25,7 +26,7 @@ public class DeleteBlockTest {
     @DisplayName("should return false, when no record is found")
     void shouldReturnFalse() {
         final String externalId = "a-id-spec";
-        when(blockRepository.deleteByExternalId(externalId)).thenReturn(0);
+        when(bookingRepository.deleteByExternalId(externalId)).thenReturn(0);
         Assertions.assertFalse(subject.execute(externalId));
     }
 
@@ -33,7 +34,7 @@ public class DeleteBlockTest {
     @DisplayName("throws BlockGenericException, when an unexpected exception occurred")
     void throwsBlockGenericException() {
         final String externalId = "a-id-spec";
-        when(blockRepository.deleteByExternalId(externalId)).thenThrow(new RuntimeException("an-error"));
+        when(bookingRepository.deleteByExternalId(externalId)).thenThrow(new RuntimeException("an-error"));
         Assertions.assertThrows(BlockGenericException.class, () -> subject.execute(externalId));
     }
 }
