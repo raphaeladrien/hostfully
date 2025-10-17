@@ -33,7 +33,7 @@ public class BlockController {
     }
 
     @DeleteMapping("/{id}")
-    public ResponseEntity<Void> deleteUser(@PathVariable String id) {
+    public ResponseEntity<Void> deleteBlock(@PathVariable String id) {
         deleteBlock.execute(id);
         return ResponseEntity.noContent().build();
     }

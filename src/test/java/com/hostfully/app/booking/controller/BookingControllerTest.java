@@ -1,16 +1,17 @@
 package com.hostfully.app.booking.controller;
 
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.hostfully.app.block.exceptions.BlockGenericException;
 import com.hostfully.app.block.exceptions.OverlapBlockException;
 import com.hostfully.app.booking.controller.dto.BookingRequest;
 import com.hostfully.app.booking.domain.Booking;
+import com.hostfully.app.booking.exception.BookingGenericException;
+import com.hostfully.app.booking.exception.BookingNotFoundException;
 import com.hostfully.app.booking.usecase.CreateBooking;
 import com.hostfully.app.booking.usecase.DeleteBooking;
+import com.hostfully.app.booking.usecase.GetBooking;
 import com.hostfully.app.infra.exception.InvalidDateRangeException;
 import com.hostfully.app.infra.exception.PropertyNotFoundException;
 import java.time.LocalDate;
@@ -41,6 +42,9 @@ public class BookingControllerTest {
 
     @MockitoBean
     private DeleteBooking deleteBooking;
+
+    @MockitoBean
+    private GetBooking getBooking;
 
     private final String url = "/v1/bookings";
 
@@ -126,7 +130,7 @@ public class BookingControllerTest {
     void postGenericBookingCreationException() throws Exception {
         final BookingRequest payload = buildBookingRequest();
 
-        Mockito.when(createBooking.execute(Mockito.any())).thenThrow(new BlockGenericException("an error", null));
+        Mockito.when(createBooking.execute(Mockito.any())).thenThrow(new BookingGenericException("an error", null));
 
         final MockHttpServletRequestBuilder request = post(url)
                 .header("Idempotency-Key", UUID.randomUUID())
@@ -151,9 +155,42 @@ public class BookingControllerTest {
     @DisplayName("DELETE /bookings/{id} - error unexpected internal error")
     void deleteGenericBookingCreationException() throws Exception {
         final String id = "a-super-id";
-        Mockito.when(deleteBooking.execute(id)).thenThrow(new BlockGenericException("a error", null));
+        Mockito.when(deleteBooking.execute(id)).thenThrow(new BookingGenericException("a error", null));
 
         final MockHttpServletRequestBuilder request = delete(url + "/" + id);
+
+        mvc.perform(request).andExpect(status().isInternalServerError());
+    }
+
+    @Test
+    @DisplayName("GET /bookings/{id} - get booking by ID")
+    void getBooking() throws Exception {
+        final String id = "a-super-id";
+        Mockito.when(getBooking.execute(id)).thenReturn(buildBooking());
+
+        final MockHttpServletRequestBuilder request = get(url + "/" + id);
+
+        mvc.perform(request).andExpect(status().isOk());
+    }
+
+    @Test
+    @DisplayName("GET /bookings/{id} - booking not found error")
+    void getBookingNotFoundException() throws Exception {
+        final String id = "a-super-id";
+        Mockito.when(getBooking.execute(id)).thenThrow(new BookingNotFoundException("a error"));
+
+        final MockHttpServletRequestBuilder request = get(url + "/" + id);
+
+        mvc.perform(request).andExpect(status().isNotFound());
+    }
+
+    @Test
+    @DisplayName("GET /bookings/{id} - error unexpected internal error")
+    void getBookingGenericBookingGenericException() throws Exception {
+        final String id = "a-super-id";
+        Mockito.when(getBooking.execute(id)).thenThrow(new BookingGenericException("a error", null));
+
+        final MockHttpServletRequestBuilder request = get(url + "/" + id);
 
         mvc.perform(request).andExpect(status().isInternalServerError());
     }

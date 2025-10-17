@@ -3,6 +3,7 @@ package com.hostfully.app.infra.repository;
 import com.hostfully.app.infra.entity.BookingEntity;
 import jakarta.transaction.Transactional;
 import java.time.LocalDate;
+import java.util.Optional;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
@@ -23,4 +24,7 @@ public interface BookingRepository extends JpaRepository<BookingEntity, Long> {
     @Transactional
     @Query("DELETE FROM BookingEntity b WHERE b.externalId = :externalId")
     int deleteByExternalId(String externalId);
+
+    @Query("SELECT b FROM BookingEntity b LEFT JOIN FETCH b.property where b.externalId = :externalId")
+    Optional<BookingEntity> findByExternalId(String externalId);
 }

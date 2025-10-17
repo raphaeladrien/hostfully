@@ -5,6 +5,7 @@ import com.hostfully.app.booking.domain.Booking;
 import com.hostfully.app.booking.usecase.CreateBooking;
 import com.hostfully.app.booking.usecase.CreateBooking.CreateBookingCommand;
 import com.hostfully.app.booking.usecase.DeleteBooking;
+import com.hostfully.app.booking.usecase.GetBooking;
 import jakarta.validation.Valid;
 import java.util.UUID;
 import lombok.AllArgsConstructor;
@@ -19,9 +20,10 @@ public class BookingController {
 
     private CreateBooking createBooking;
     private DeleteBooking deleteBooking;
+    private GetBooking getBooking;
 
     @PostMapping
-    public ResponseEntity<Booking> createBlock(
+    public ResponseEntity<Booking> createBooking(
             @Valid @RequestBody BookingRequest request,
             @RequestHeader(value = "Idempotency-Key") final UUID idempotencyKey) {
         final Booking booking = createBooking.execute(new CreateBookingCommand(
@@ -35,8 +37,13 @@ public class BookingController {
     }
 
     @DeleteMapping("/{id}")
-    public ResponseEntity<Void> deleteUser(@PathVariable String id) {
+    public ResponseEntity<Void> deleteBooking(@PathVariable String id) {
         deleteBooking.execute(id);
         return ResponseEntity.noContent().build();
+    }
+
+    @GetMapping("/{id}")
+    public ResponseEntity<Booking> getBooking(@PathVariable String id) {
+        return ResponseEntity.ok(getBooking.execute(id));
     }
 }

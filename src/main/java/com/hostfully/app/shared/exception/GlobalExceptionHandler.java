@@ -2,6 +2,7 @@ package com.hostfully.app.shared.exception;
 
 import com.hostfully.app.block.exceptions.*;
 import com.hostfully.app.booking.exception.BookingGenericException;
+import com.hostfully.app.booking.exception.BookingNotFoundException;
 import com.hostfully.app.booking.exception.OverlapBookingException;
 import com.hostfully.app.infra.exception.InvalidDateRangeException;
 import com.hostfully.app.infra.exception.PropertyNotFoundException;
@@ -182,5 +183,19 @@ public class GlobalExceptionHandler {
         problemDetail.setProperty("timestamp", Instant.now());
 
         return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(problemDetail);
+    }
+
+    @ExceptionHandler(BookingNotFoundException.class)
+    public ResponseEntity<ProblemDetail> handleBookingNotFoundException(
+            BookingNotFoundException ex, HttpServletRequest request) {
+
+        ProblemDetail problemDetail = ProblemDetail.forStatusAndDetail(HttpStatus.NOT_FOUND, ex.getMessage());
+
+        problemDetail.setType(URI.create(PROBLEM_BASE_URL));
+        problemDetail.setTitle(ex.getTitle());
+        problemDetail.setInstance(URI.create(request.getRequestURI()));
+        problemDetail.setProperty("timestamp", Instant.now());
+
+        return ResponseEntity.status(HttpStatus.NOT_FOUND).body(problemDetail);
     }
 }

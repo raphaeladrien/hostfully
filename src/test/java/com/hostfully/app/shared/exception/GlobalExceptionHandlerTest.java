@@ -5,6 +5,7 @@ import static org.mockito.Mockito.when;
 
 import com.hostfully.app.block.exceptions.*;
 import com.hostfully.app.booking.exception.BookingGenericException;
+import com.hostfully.app.booking.exception.BookingNotFoundException;
 import com.hostfully.app.booking.exception.OverlapBookingException;
 import com.hostfully.app.infra.exception.InvalidDateRangeException;
 import com.hostfully.app.infra.exception.PropertyNotFoundException;
@@ -267,6 +268,26 @@ class GlobalExceptionHandlerTest {
         assertThat(problemDetail.getStatus()).isEqualTo(HttpStatus.INTERNAL_SERVER_ERROR.value());
         assertThat(problemDetail.getTitle()).isEqualTo(exception.getTitle());
         assertThat(problemDetail.getDetail()).isEqualTo("Failed to create block");
+        assertThat(problemDetail.getInstance()).isEqualTo(URI.create(TEST_REQUEST_URI));
+        assertThat(problemDetail.getType()).isEqualTo(URI.create("about:blank"));
+        assertThat(problemDetail.getProperties()).containsKey("timestamp");
+    }
+
+    @Test
+    @DisplayName("Should handle BookingNotFoundException and return bad request status")
+    void shouldHandleBookingNotFoundException() {
+        final BookingNotFoundException exception = new BookingNotFoundException("Booking not found by id provided");
+
+        final ResponseEntity<ProblemDetail> response =
+                globalExceptionHandler.handleBookingNotFoundException(exception, request);
+
+        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.NOT_FOUND);
+        assertThat(response.getBody()).isNotNull();
+
+        final ProblemDetail problemDetail = response.getBody();
+        assertThat(problemDetail.getStatus()).isEqualTo(HttpStatus.NOT_FOUND.value());
+        assertThat(problemDetail.getTitle()).isEqualTo(exception.getTitle());
+        assertThat(problemDetail.getDetail()).isEqualTo("Booking not found by id provided");
         assertThat(problemDetail.getInstance()).isEqualTo(URI.create(TEST_REQUEST_URI));
         assertThat(problemDetail.getType()).isEqualTo(URI.create("about:blank"));
         assertThat(problemDetail.getProperties()).containsKey("timestamp");

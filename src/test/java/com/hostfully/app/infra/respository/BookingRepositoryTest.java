@@ -8,8 +8,10 @@ import com.hostfully.app.infra.entity.BookingEntity.BookingStatus;
 import com.hostfully.app.infra.entity.PropertyEntity;
 import com.hostfully.app.infra.repository.BookingRepository;
 import java.time.LocalDate;
+import java.util.Optional;
 import java.util.stream.Stream;
 import org.assertj.core.api.Assertions;
+import org.assertj.core.api.SoftAssertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -105,6 +107,37 @@ public class BookingRepositoryTest {
     void returnsZeroWhenNoRecordToDelete() {
         Assertions.assertThat(bookingRepository.deleteByExternalId("my-amazing"))
                 .isEqualTo(0);
+    }
+
+    @Test
+    @DisplayName("when record is found by external id, returns Optional")
+    void whenRecordIsFoundByExternalId() {
+        final String id = "qwerty-1234";
+        createAndSaveBooking(
+                id, property1, BookingStatus.CONFIRMED, LocalDate.of(2025, 1, 2), LocalDate.of(2025, 1, 5));
+
+        final Optional<BookingEntity> optionalBooking = bookingRepository.findByExternalId(id);
+
+        SoftAssertions.assertSoftly(softAssertions -> {
+            Assertions.assertThat(optionalBooking.isPresent()).isTrue();
+            final BookingEntity result = optionalBooking.get();
+            Assertions.assertThat(result.getProperty().getAlias()).isEqualTo(property1.getAlias());
+            Assertions.assertThat(result.getProperty().getExternalId()).isEqualTo(property1.getExternalId());
+            Assertions.assertThat(result.getProperty().getDescription()).isEqualTo(property1.getDescription());
+            Assertions.assertThat(result.getExternalId()).isEqualTo(id);
+        });
+    }
+
+    @Test
+    @DisplayName("when record isn't found by external id, returns Optional empty")
+    void whenRecordIsNotFoundByExternalId() {
+        final String id = "qwerty-1234";
+        createAndSaveBooking(
+                id, property1, BookingStatus.CONFIRMED, LocalDate.of(2025, 1, 2), LocalDate.of(2025, 1, 5));
+
+        final Optional<BookingEntity> optionalBlock = bookingRepository.findByExternalId("wow-id");
+
+        Assertions.assertThat(optionalBlock.isPresent()).isFalse();
     }
 
     private static Stream<Arguments> provideOverlapRanges() {

@@ -15,8 +15,8 @@ public class DeleteBookingTest {
     private final DeleteBooking subject = new DeleteBooking(bookingRepository);
 
     @Test
-    @DisplayName("should delete a block, when a ID is provided")
-    void shouldDeleteABlock() {
+    @DisplayName("should delete a booking, when a ID is provided")
+    void shouldDeleteBooking() {
         final String externalId = "a-id-spec";
         when(bookingRepository.deleteByExternalId(externalId)).thenReturn(1);
         Assertions.assertTrue(subject.execute(externalId));
