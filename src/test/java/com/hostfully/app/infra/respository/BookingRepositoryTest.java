@@ -100,9 +100,9 @@ public class BookingRepositoryTest {
 
     private static Stream<Arguments> provideRanges() {
         return Stream.of(
-                arguments(LocalDate.of(2025, 1, 1), LocalDate.of(2025, 1, 2), propertyId1),
-                arguments(LocalDate.of(2025, 1, 5), LocalDate.of(2025, 1, 6), propertyId1),
-                arguments(LocalDate.of(2025, 1, 5), LocalDate.of(2025, 1, 6), propertyId2));
+                arguments(LocalDate.of(2025, 1, 6), LocalDate.of(2025, 1, 10), propertyId1),
+                arguments(LocalDate.of(2025, 1, 6), LocalDate.of(2025, 1, 8), propertyId1),
+                arguments(LocalDate.of(2025, 1, 6), LocalDate.of(2025, 1, 7), propertyId2));
     }
 
     private Long createAndSaveBooking(

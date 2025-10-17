@@ -13,7 +13,7 @@ public interface BookingRepository extends JpaRepository<BookingEntity, Long> {
             + "   WHERE b.property.externalId = :propertyId"
             + "   AND b.status = 'CONFIRMED'"
             + "   AND (:bookingId IS NULL OR b.externalId <> :bookingId)"
-            + "   AND b.startDate < :endDate"
-            + "   AND b.endDate > :startDate")
+            + "   AND b.startDate <= :endDate"
+            + "   AND b.endDate >= :startDate")
     boolean hasOverlapping(String propertyId, LocalDate startDate, LocalDate endDate, String bookingId);
 }

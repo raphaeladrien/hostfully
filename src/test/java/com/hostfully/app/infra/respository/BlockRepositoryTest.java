@@ -174,16 +174,17 @@ public class BlockRepositoryTest {
 
     private static Stream<Arguments> provideRanges() {
         return Stream.of(
-                arguments(LocalDate.of(2025, 1, 15), LocalDate.of(2025, 1, 20), "PROP-001"),
-                arguments(LocalDate.of(2025, 1, 1), LocalDate.of(2025, 1, 5), "PROP-001"),
+                arguments(LocalDate.of(2025, 1, 16), LocalDate.of(2025, 1, 20), "PROP-001"),
+                arguments(LocalDate.of(2025, 1, 1), LocalDate.of(2025, 1, 4), "PROP-001"),
                 arguments(LocalDate.of(2025, 1, 20), LocalDate.of(2025, 1, 29), "PROP-001"),
-                arguments(LocalDate.of(2025, 1, 5), LocalDate.of(2025, 1, 15), "PROP-002"));
+                arguments(LocalDate.of(2025, 1, 6), LocalDate.of(2025, 1, 15), "PROP-002"));
     }
 
     private static Stream<Arguments> provideOverlapRanges() {
         return Stream.of(
                 arguments(LocalDate.of(2025, 1, 1), LocalDate.of(2025, 1, 6), "PROP-001"),
                 arguments(LocalDate.of(2025, 1, 6), LocalDate.of(2025, 1, 10), "PROP-001"),
-                arguments(LocalDate.of(2025, 1, 5), LocalDate.of(2025, 1, 15), "PROP-001"));
+                arguments(LocalDate.of(2025, 1, 5), LocalDate.of(2025, 1, 15), "PROP-001"),
+                arguments(LocalDate.of(2025, 1, 15), LocalDate.of(2025, 1, 16), "PROP-001"));
     }
 }

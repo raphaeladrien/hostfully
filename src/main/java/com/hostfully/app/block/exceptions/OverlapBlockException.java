@@ -6,6 +6,6 @@ public class OverlapBlockException extends RuntimeException {
     }
 
     public String getTitle() {
-        return "Block already scheduled for this property";
+        return "Block not allowed";
     }
 }

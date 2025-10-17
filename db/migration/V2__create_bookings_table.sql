@@ -5,7 +5,7 @@ CREATE TABLE IF NOT EXISTS bookings
     property_id BIGINT NOT NULL,
     start_date TIMESTAMP NOT NULL,
     end_date TIMESTAMP NOT NULL,
-    guest_name VARCHAR(55) NOT NULL,
+    guest_name VARCHAR(250) NOT NULL,
     number_guest INT NOT NULL,
     status VARCHAR(50) NOT NULL,
     version BIGINT NOT NULL DEFAULT 1,

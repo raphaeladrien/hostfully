@@ -51,11 +51,13 @@ public class CreateBooking {
                 BookingStatus.CONFIRMED.name());
 
         if (!DateRangeValidator.validateDateRange(booking.getStartDate(), booking.getEndDate(), false))
-            throw new InvalidDateRangeException("Start date must be before end date");
+            throw new InvalidDateRangeException("The start date and end date must not be the same. "
+                    + "The end date should be greater than the start date.");
 
         if (!availabilityService.canBook(
                 booking.getStartDate(), booking.getEndDate(), booking.getPropertyId(), booking.getId()))
-            throw new OverlapBookingException("Block already created for this property in the timeframe provided");
+            throw new OverlapBookingException("We’re unable to process your booking for this property. "
+                    + "Please refresh the page or try again later.");
 
         final PropertyEntity propertyEntity = getProperty(booking.getPropertyId());
         try {
