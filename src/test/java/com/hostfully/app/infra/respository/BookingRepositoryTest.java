@@ -185,6 +185,34 @@ public class BookingRepositoryTest {
         Assertions.assertThat(entity.get().getEndDate()).isEqualTo(endDate);
     }
 
+    @Test
+    @DisplayName("update booking guest, numberGuest, start and end date by external id")
+    void updateGuestNumberGuestStartEndDateByExternalId() {
+        final String id = "qwerty-1234";
+        final LocalDate startDate = LocalDate.of(2025, 12, 25);
+        final LocalDate endDate = LocalDate.of(2025, 12, 26);
+        final String guest = "Jon Snow";
+
+        createAndSaveBooking(
+                id, property1, BookingStatus.CONFIRMED, LocalDate.of(2025, 1, 2), LocalDate.of(2025, 1, 5));
+        createAndSaveBooking(
+                "asert-1", property1, BookingStatus.CONFIRMED, LocalDate.of(2025, 1, 10), LocalDate.of(2025, 1, 20));
+
+        final int result = bookingRepository.updateStartDateEndGuestNumber(startDate, endDate, guest, 2, id);
+        entityManager.flush();
+        entityManager.clear();
+
+        Optional<BookingEntity> optionalEntity = bookingRepository.findByExternalId(id);
+
+        Assertions.assertThat(result).isEqualTo(1);
+        Assertions.assertThat(optionalEntity.isPresent()).isTrue();
+        final BookingEntity entity = optionalEntity.get();
+        Assertions.assertThat(entity.getStartDate()).isEqualTo(startDate);
+        Assertions.assertThat(entity.getEndDate()).isEqualTo(endDate);
+        Assertions.assertThat(entity.getGuest()).isEqualTo(guest);
+        Assertions.assertThat(entity.getNumberGuest()).isEqualTo(2);
+    }
+
     private static Stream<Arguments> provideOverlapRanges() {
         return Stream.of(
                 arguments(LocalDate.of(2025, 1, 1), LocalDate.of(2025, 1, 3), propertyId1),
@@ -208,8 +236,20 @@ public class BookingRepositoryTest {
             final BookingStatus status,
             final LocalDate startDate,
             final LocalDate endDate) {
+        return createAndSaveBooking(id, property, "Daenerys Targaryen", 4, status, startDate, endDate);
+    }
+
+    private Long createAndSaveBooking(
+            final String id,
+            final PropertyEntity property,
+            final String guest,
+            final int numberGuest,
+            final BookingStatus status,
+            final LocalDate startDate,
+            final LocalDate endDate
+            ) {
         final BookingEntity booking =
-                new BookingEntity(id, property, "Daenerys Targaryen", 4, status, startDate, endDate);
+                new BookingEntity(id, property, guest, numberGuest, status, startDate, endDate);
         entityManager.persist(booking);
         entityManager.flush();
         return booking.getId();

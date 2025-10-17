@@ -1,17 +1,17 @@
 meta {
-  name: get-booking-id
+  name: rebook-booking
   type: http
-  seq: 6
+  seq: 9
 }
 
-get {
-  url: http://localhost:8080/v1/bookings/:id
+post {
+  url: http://localhost:8080/v1/bookings/:id/rebook
   body: json
   auth: inherit
 }
 
 params:path {
-  id: 1_9_y7uQ7CBI
+  id: c9N9HB4j_Jwe
 }
 
 headers {
@@ -20,9 +20,6 @@ headers {
 
 body:json {
   {
-    "property": "AMAZINGHOUSE",
-    "guest": "Joe Doe",
-    "numberGuest": 10,
     "startDate": "2025-12-03",
     "endDate": "2025-12-04"
   }

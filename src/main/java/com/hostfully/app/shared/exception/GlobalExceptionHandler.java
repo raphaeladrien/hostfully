@@ -1,10 +1,7 @@
 package com.hostfully.app.shared.exception;
 
 import com.hostfully.app.block.exceptions.*;
-import com.hostfully.app.booking.exception.BookingGenericException;
-import com.hostfully.app.booking.exception.BookingNotFoundException;
-import com.hostfully.app.booking.exception.OverlapBookingException;
-import com.hostfully.app.booking.exception.RebookNotAllowedException;
+import com.hostfully.app.booking.exception.*;
 import com.hostfully.app.infra.exception.InvalidDateRangeException;
 import com.hostfully.app.infra.exception.PropertyNotFoundException;
 import jakarta.servlet.http.HttpServletRequest;
@@ -203,6 +200,20 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(RebookNotAllowedException.class)
     public ResponseEntity<ProblemDetail> handleOReebokNotAllowedException(
             RebookNotAllowedException ex, HttpServletRequest request) {
+
+        ProblemDetail problemDetail = ProblemDetail.forStatusAndDetail(HttpStatus.CONFLICT, ex.getMessage());
+
+        problemDetail.setType(URI.create(PROBLEM_BASE_URL));
+        problemDetail.setTitle(ex.getTitle());
+        problemDetail.setInstance(URI.create(request.getRequestURI()));
+        problemDetail.setProperty("timestamp", Instant.now());
+
+        return ResponseEntity.status(HttpStatus.CONFLICT).body(problemDetail);
+    }
+
+    @ExceptionHandler(UpdateNotAllowedException.class)
+    public ResponseEntity<ProblemDetail> handleUpdateNotAllowedException(
+            UpdateNotAllowedException ex, HttpServletRequest request) {
 
         ProblemDetail problemDetail = ProblemDetail.forStatusAndDetail(HttpStatus.CONFLICT, ex.getMessage());
 

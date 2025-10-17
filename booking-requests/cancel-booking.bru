@@ -1,12 +1,12 @@
 meta {
-  name: get-booking-id
+  name: cancel-booking
   type: http
-  seq: 6
+  seq: 8
 }
 
-get {
-  url: http://localhost:8080/v1/bookings/:id
-  body: json
+post {
+  url: http://localhost:8080/v1/bookings/:id/cancel
+  body: none
   auth: inherit
 }
 

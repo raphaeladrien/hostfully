@@ -4,10 +4,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.when;
 
 import com.hostfully.app.block.exceptions.*;
-import com.hostfully.app.booking.exception.BookingGenericException;
-import com.hostfully.app.booking.exception.BookingNotFoundException;
-import com.hostfully.app.booking.exception.OverlapBookingException;
-import com.hostfully.app.booking.exception.RebookNotAllowedException;
+import com.hostfully.app.booking.exception.*;
 import com.hostfully.app.infra.exception.InvalidDateRangeException;
 import com.hostfully.app.infra.exception.PropertyNotFoundException;
 import jakarta.servlet.http.HttpServletRequest;
@@ -309,6 +306,26 @@ class GlobalExceptionHandlerTest {
         assertThat(problemDetail.getStatus()).isEqualTo(HttpStatus.CONFLICT.value());
         assertThat(problemDetail.getTitle()).isEqualTo(exception.getTitle());
         assertThat(problemDetail.getDetail()).isEqualTo("Reebok not allowed");
+        assertThat(problemDetail.getInstance()).isEqualTo(URI.create(TEST_REQUEST_URI));
+        assertThat(problemDetail.getType()).isEqualTo(URI.create("about:blank"));
+        assertThat(problemDetail.getProperties()).containsKey("timestamp");
+    }
+
+    @Test
+    @DisplayName("Should handle UpdateNotAllowedException and return conflict status")
+    void shouldHandleUpdateNotAllowedException() {
+        final UpdateNotAllowedException exception = new UpdateNotAllowedException("Update not allowed");
+
+        final ResponseEntity<ProblemDetail> response =
+                globalExceptionHandler.handleUpdateNotAllowedException(exception, request);
+
+        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.CONFLICT);
+        assertThat(response.getBody()).isNotNull();
+
+        final ProblemDetail problemDetail = response.getBody();
+        assertThat(problemDetail.getStatus()).isEqualTo(HttpStatus.CONFLICT.value());
+        assertThat(problemDetail.getTitle()).isEqualTo(exception.getTitle());
+        assertThat(problemDetail.getDetail()).isEqualTo("Update not allowed");
         assertThat(problemDetail.getInstance()).isEqualTo(URI.create(TEST_REQUEST_URI));
         assertThat(problemDetail.getType()).isEqualTo(URI.create("about:blank"));
         assertThat(problemDetail.getProperties()).containsKey("timestamp");

@@ -24,7 +24,7 @@ public interface BlockRepository extends JpaRepository<BlockEntity, Long> {
     @Query("DELETE FROM BlockEntity b WHERE b.externalId = :externalId")
     int deleteByExternalId(String externalId);
 
-    @Modifying
+    @Modifying(clearAutomatically = true, flushAutomatically = true)
     @Transactional
     @Query("UPDATE BlockEntity b SET b.property = :property, b.reason = :reason, b.startDate = :startDate, "
             + "b.endDate = :endDate WHERE b.externalId = :externalId")
