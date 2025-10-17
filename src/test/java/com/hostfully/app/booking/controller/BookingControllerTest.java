@@ -6,13 +6,13 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.hostfully.app.block.exceptions.OverlapBlockException;
 import com.hostfully.app.booking.controller.dto.BookingRequest;
+import com.hostfully.app.booking.controller.dto.RebookBookingRequest;
 import com.hostfully.app.booking.domain.Booking;
 import com.hostfully.app.booking.exception.BookingGenericException;
 import com.hostfully.app.booking.exception.BookingNotFoundException;
-import com.hostfully.app.booking.usecase.CancelBooking;
-import com.hostfully.app.booking.usecase.CreateBooking;
-import com.hostfully.app.booking.usecase.DeleteBooking;
-import com.hostfully.app.booking.usecase.GetBooking;
+import com.hostfully.app.booking.exception.OverlapBookingException;
+import com.hostfully.app.booking.exception.RebookNotAllowedException;
+import com.hostfully.app.booking.usecase.*;
 import com.hostfully.app.infra.exception.InvalidDateRangeException;
 import com.hostfully.app.infra.exception.PropertyNotFoundException;
 import java.time.LocalDate;
@@ -49,6 +49,9 @@ public class BookingControllerTest {
 
     @MockitoBean
     private CancelBooking cancelBooking;
+
+    @MockitoBean
+    private RebookBooking rebookBooking;
 
     private final String url = "/v1/bookings";
 
@@ -255,6 +258,134 @@ public class BookingControllerTest {
         ;
 
         mvc.perform(request).andExpect(status().isInternalServerError());
+    }
+
+    @Test
+    @DisplayName("POST /bookings/{id}/rebook - error missing Idempotency-Key header")
+    void postRebookBookingMissingIdempotencyHeader() throws Exception {
+        final String id = "a-super-id";
+        final String url = this.url + "/" + id + "/rebook";
+        final UUID idempotencyKey = UUID.randomUUID();
+        final RebookBookingRequest payload = buildRebookBookingRequest();
+
+        Mockito.when(rebookBooking.execute(Mockito.any())).thenReturn(buildBooking());
+
+        final MockHttpServletRequestBuilder request =
+                post(url).contentType(MediaType.APPLICATION_JSON_VALUE).content(mapper.writeValueAsString(payload));
+
+        mvc.perform(request).andExpect(status().isBadRequest());
+    }
+
+    @Test
+    @DisplayName("POST /bookings/{id}/rebook - booking canceled successfully")
+    void postRebookBookingSuccess() throws Exception {
+        final String id = "a-super-id";
+        final String url = this.url + "/" + id + "/rebook";
+        final UUID idempotencyKey = UUID.randomUUID();
+        final RebookBookingRequest payload = buildRebookBookingRequest();
+
+        Mockito.when(rebookBooking.execute(Mockito.any())).thenReturn(buildBooking());
+
+        final MockHttpServletRequestBuilder request = post(url)
+                .header("Idempotency-Key", UUID.randomUUID())
+                .contentType(MediaType.APPLICATION_JSON_VALUE)
+                .content(mapper.writeValueAsString(payload));
+
+        mvc.perform(request).andExpect(status().isOk());
+    }
+
+    @Test
+    @DisplayName("POST /bookings/{id}/rebook - error rebook not allowed")
+    void postRebookBookingRebookNotAllowedException() throws Exception {
+        final String id = "a-super-id";
+        final String url = this.url + "/" + id + "/rebook";
+        final UUID idempotencyKey = UUID.randomUUID();
+        final RebookBookingRequest payload = buildRebookBookingRequest();
+
+        Mockito.when(rebookBooking.execute(Mockito.any())).thenThrow(new RebookNotAllowedException("error"));
+
+        final MockHttpServletRequestBuilder request = post(url)
+                .header("Idempotency-Key", UUID.randomUUID())
+                .contentType(MediaType.APPLICATION_JSON_VALUE)
+                .content(mapper.writeValueAsString(payload));
+
+        mvc.perform(request).andExpect(status().isConflict());
+    }
+
+    @Test
+    @DisplayName("POST /bookings/{id}/rebook - error invalid date range")
+    void postRebookBookingRebookInvalidDateRangeException() throws Exception {
+        final String id = "a-super-id";
+        final String url = this.url + "/" + id + "/rebook";
+        final UUID idempotencyKey = UUID.randomUUID();
+        final RebookBookingRequest payload = buildRebookBookingRequest();
+
+        Mockito.when(rebookBooking.execute(Mockito.any())).thenThrow(new InvalidDateRangeException("error"));
+
+        final MockHttpServletRequestBuilder request = post(url)
+                .header("Idempotency-Key", UUID.randomUUID())
+                .contentType(MediaType.APPLICATION_JSON_VALUE)
+                .content(mapper.writeValueAsString(payload));
+
+        mvc.perform(request).andExpect(status().isBadRequest());
+    }
+
+    @Test
+    @DisplayName("POST /bookings/{id}/rebook - error overlap date")
+    void postRebookBookingRebookOverlapBookingException() throws Exception {
+        final String id = "a-super-id";
+        final String url = this.url + "/" + id + "/rebook";
+        final UUID idempotencyKey = UUID.randomUUID();
+        final RebookBookingRequest payload = buildRebookBookingRequest();
+
+        Mockito.when(rebookBooking.execute(Mockito.any())).thenThrow(new OverlapBookingException("error"));
+
+        final MockHttpServletRequestBuilder request = post(url)
+                .header("Idempotency-Key", UUID.randomUUID())
+                .contentType(MediaType.APPLICATION_JSON_VALUE)
+                .content(mapper.writeValueAsString(payload));
+
+        mvc.perform(request).andExpect(status().isConflict());
+    }
+
+    @Test
+    @DisplayName("POST /bookings/{id}/rebook - error booking not found")
+    void postRebookBookingRebookBookingNotFoundException() throws Exception {
+        final String id = "a-super-id";
+        final String url = this.url + "/" + id + "/rebook";
+        final UUID idempotencyKey = UUID.randomUUID();
+        final RebookBookingRequest payload = buildRebookBookingRequest();
+
+        Mockito.when(rebookBooking.execute(Mockito.any())).thenThrow(new BookingNotFoundException("error"));
+
+        final MockHttpServletRequestBuilder request = post(url)
+                .header("Idempotency-Key", UUID.randomUUID())
+                .contentType(MediaType.APPLICATION_JSON_VALUE)
+                .content(mapper.writeValueAsString(payload));
+
+        mvc.perform(request).andExpect(status().isNotFound());
+    }
+
+    @Test
+    @DisplayName("POST /bookings/{id}/rebook - error unexpected exception")
+    void postRebookBookingRebookBookingGenericException() throws Exception {
+        final String id = "a-super-id";
+        final String url = this.url + "/" + id + "/rebook";
+        final UUID idempotencyKey = UUID.randomUUID();
+        final RebookBookingRequest payload = buildRebookBookingRequest();
+
+        Mockito.when(rebookBooking.execute(Mockito.any())).thenThrow(new BookingGenericException("error", null));
+
+        final MockHttpServletRequestBuilder request = post(url)
+                .header("Idempotency-Key", UUID.randomUUID())
+                .contentType(MediaType.APPLICATION_JSON_VALUE)
+                .content(mapper.writeValueAsString(payload));
+
+        mvc.perform(request).andExpect(status().isInternalServerError());
+    }
+
+    private RebookBookingRequest buildRebookBookingRequest() {
+        return new RebookBookingRequest(startDate, endDate);
     }
 
     private BookingRequest buildBookingRequest() {

@@ -7,6 +7,7 @@ import com.hostfully.app.block.exceptions.*;
 import com.hostfully.app.booking.exception.BookingGenericException;
 import com.hostfully.app.booking.exception.BookingNotFoundException;
 import com.hostfully.app.booking.exception.OverlapBookingException;
+import com.hostfully.app.booking.exception.RebookNotAllowedException;
 import com.hostfully.app.infra.exception.InvalidDateRangeException;
 import com.hostfully.app.infra.exception.PropertyNotFoundException;
 import jakarta.servlet.http.HttpServletRequest;
@@ -288,6 +289,26 @@ class GlobalExceptionHandlerTest {
         assertThat(problemDetail.getStatus()).isEqualTo(HttpStatus.NOT_FOUND.value());
         assertThat(problemDetail.getTitle()).isEqualTo(exception.getTitle());
         assertThat(problemDetail.getDetail()).isEqualTo("Booking not found by id provided");
+        assertThat(problemDetail.getInstance()).isEqualTo(URI.create(TEST_REQUEST_URI));
+        assertThat(problemDetail.getType()).isEqualTo(URI.create("about:blank"));
+        assertThat(problemDetail.getProperties()).containsKey("timestamp");
+    }
+
+    @Test
+    @DisplayName("Should handle ReebokNotAllowedException and return conflict status")
+    void shouldHandleReebokNotAllowedException() {
+        final RebookNotAllowedException exception = new RebookNotAllowedException("Reebok not allowed");
+
+        final ResponseEntity<ProblemDetail> response =
+                globalExceptionHandler.handleOReebokNotAllowedException(exception, request);
+
+        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.CONFLICT);
+        assertThat(response.getBody()).isNotNull();
+
+        final ProblemDetail problemDetail = response.getBody();
+        assertThat(problemDetail.getStatus()).isEqualTo(HttpStatus.CONFLICT.value());
+        assertThat(problemDetail.getTitle()).isEqualTo(exception.getTitle());
+        assertThat(problemDetail.getDetail()).isEqualTo("Reebok not allowed");
         assertThat(problemDetail.getInstance()).isEqualTo(URI.create(TEST_REQUEST_URI));
         assertThat(problemDetail.getType()).isEqualTo(URI.create("about:blank"));
         assertThat(problemDetail.getProperties()).containsKey("timestamp");

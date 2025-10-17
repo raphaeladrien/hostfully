@@ -31,6 +31,12 @@ public interface BookingRepository extends JpaRepository<BookingEntity, Long> {
     @Query("UPDATE BookingEntity b SET b.status = :status WHERE b.externalId = :externalId")
     int updateStatus(BookingStatus status, String externalId);
 
+    @Modifying
+    @Transactional
+    @Query(
+            "UPDATE BookingEntity b SET b.status = :status, b.startDate = :startDate, b.endDate = :endDate WHERE b.externalId = :externalId")
+    int updateStatusAndTimeframe(BookingStatus status, LocalDate startDate, LocalDate endDate, String externalId);
+
     @Query("SELECT b FROM BookingEntity b LEFT JOIN FETCH b.property where b.externalId = :externalId")
     Optional<BookingEntity> findByExternalId(String externalId);
 }

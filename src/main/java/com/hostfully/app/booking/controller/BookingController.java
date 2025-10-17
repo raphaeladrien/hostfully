@@ -1,12 +1,10 @@
 package com.hostfully.app.booking.controller;
 
 import com.hostfully.app.booking.controller.dto.BookingRequest;
+import com.hostfully.app.booking.controller.dto.RebookBookingRequest;
 import com.hostfully.app.booking.domain.Booking;
-import com.hostfully.app.booking.usecase.CancelBooking;
-import com.hostfully.app.booking.usecase.CreateBooking;
+import com.hostfully.app.booking.usecase.*;
 import com.hostfully.app.booking.usecase.CreateBooking.CreateBookingCommand;
-import com.hostfully.app.booking.usecase.DeleteBooking;
-import com.hostfully.app.booking.usecase.GetBooking;
 import jakarta.validation.Valid;
 import java.util.UUID;
 import lombok.AllArgsConstructor;
@@ -23,6 +21,7 @@ public class BookingController {
     private DeleteBooking deleteBooking;
     private GetBooking getBooking;
     private CancelBooking cancelBooking;
+    private RebookBooking rebookBooking;
 
     @PostMapping
     public ResponseEntity<Booking> createBooking(
@@ -39,9 +38,18 @@ public class BookingController {
     }
 
     @PostMapping("/{id}/cancel")
-    public ResponseEntity<Booking> cancelRequest(
+    public ResponseEntity<Booking> cancelBooking(
             @PathVariable final String id, @RequestHeader(value = "Idempotency-Key") final UUID idempotencyKey) {
         return ResponseEntity.ok(cancelBooking.execute(id, idempotencyKey));
+    }
+
+    @PostMapping("/{id}/rebook")
+    public ResponseEntity<Booking> rebookBooking(
+            @Valid @RequestBody final RebookBookingRequest request,
+            @PathVariable final String id,
+            @RequestHeader(value = "Idempotency-Key") final UUID idempotencyKey) {
+        return ResponseEntity.ok(rebookBooking.execute(
+                new RebookBooking.RebookCommand(id, request.startDate(), request.endDate(), idempotencyKey)));
     }
 
     @DeleteMapping("/{id}")
