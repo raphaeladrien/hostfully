@@ -48,7 +48,7 @@ public class BlockRepositoryTest {
     void whenOverlapIsNotDetectedReturnsFalse(LocalDate startDate, LocalDate endDate, String propertyId) {
         createAndSaveBlock("qwerty-1234", property1, LocalDate.of(2025, 1, 5), LocalDate.of(2025, 1, 15));
 
-        Assertions.assertThat(blockRepository.hasOverlapping(propertyId, startDate, endDate, null))
+        Assertions.assertThat(blockRepository.hasOverlapping(propertyId, startDate, endDate))
                 .isFalse();
     }
 
@@ -58,7 +58,7 @@ public class BlockRepositoryTest {
     void whenOverlapIsDetectedReturnsTrue(LocalDate startDate, LocalDate endDate, String propertyId) {
         createAndSaveBlock("qwerty-1234", property1, LocalDate.of(2025, 1, 5), LocalDate.of(2025, 1, 15));
 
-        Assertions.assertThat(blockRepository.hasOverlapping(propertyId, startDate, endDate, null))
+        Assertions.assertThat(blockRepository.hasOverlapping(propertyId, startDate, endDate))
                 .isTrue();
     }
 

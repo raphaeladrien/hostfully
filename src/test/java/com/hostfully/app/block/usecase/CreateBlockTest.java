@@ -59,7 +59,7 @@ public class CreateBlockTest {
                 new CreateBlockCommand(propertyId, reason, startDate, endDate, idempotencyKey);
 
         when(idempotencyService.getResponse(idempotencyKey, Block.class)).thenReturn(Optional.empty());
-        when(availabilityService.hasValidDateRange(any(), any())).thenReturn(true);
+        when(availabilityService.canBlock(startDate, endDate, propertyId)).thenReturn(true);
         when(propertyRepository.findByExternalId(propertyId)).thenReturn(Optional.of(propertyEntity));
         when(blockRepository.save(any())).thenReturn(build(propertyEntity, reason, startDate, endDate));
 
@@ -74,7 +74,7 @@ public class CreateBlockTest {
         });
 
         verify(idempotencyService, times(1)).getResponse(idempotencyKey, Block.class);
-        verify(availabilityService, times(1)).hasValidDateRange(any(), any());
+        verify(availabilityService, times(1)).canBlock(startDate, endDate, propertyId);
         verify(propertyRepository, times(1)).findByExternalId(propertyId);
         verify(blockRepository, times(1)).save(any());
     }
@@ -82,16 +82,17 @@ public class CreateBlockTest {
     @Test
     @DisplayName("throws InvalidDateRangeException, when start date is greater than end date")
     void throwsInvalidDateRangeException() {
+        final LocalDate startDate = LocalDate.of(2025, 1, 10);
+        final LocalDate endDate = LocalDate.of(2025, 1, 1);
+
         final CreateBlockCommand command =
                 new CreateBlockCommand(propertyId, reason, startDate, endDate, idempotencyKey);
 
         when(idempotencyService.getResponse(idempotencyKey, Block.class)).thenReturn(Optional.empty());
-        when(availabilityService.hasValidDateRange(any(), any())).thenThrow(new InvalidDateRangeException("an error"));
 
         Assertions.assertThrows(InvalidDateRangeException.class, () -> subject.execute(command));
 
         verify(idempotencyService, times(1)).getResponse(idempotencyKey, Block.class);
-        verify(availabilityService, times(1)).hasValidDateRange(any(), any());
         verify(propertyRepository, times(0)).findByExternalId(any());
         verify(blockRepository, times(0)).save(any());
     }
@@ -109,14 +110,13 @@ public class CreateBlockTest {
                 new CreateBlockCommand(propertyId, reason, startDate, endDate, idempotencyKey);
 
         when(idempotencyService.getResponse(idempotencyKey, Block.class)).thenReturn(Optional.empty());
-        when(availabilityService.hasValidDateRange(any(), any())).thenThrow(new OverlapBlockException("an error"));
+        when(availabilityService.canBlock(startDate, endDate, propertyId)).thenReturn(false);
 
         Assertions.assertThrows(OverlapBlockException.class, () -> subject.execute(command));
 
         verify(idempotencyService, times(1)).getResponse(idempotencyKey, Block.class);
-        verify(availabilityService, times(1)).hasValidDateRange(any(), any());
-        verify(propertyRepository, times(0)).findByExternalId(any());
-        verify(blockRepository, times(0)).save(any());
+        verify(availabilityService, times(1)).canBlock(startDate, endDate, propertyId);
+        verifyNoInteractions(propertyRepository, blockRepository);
     }
 
     @Test
@@ -132,13 +132,13 @@ public class CreateBlockTest {
                 new CreateBlockCommand(propertyId, reason, startDate, endDate, idempotencyKey);
 
         when(idempotencyService.getResponse(idempotencyKey, Block.class)).thenReturn(Optional.empty());
-        when(availabilityService.hasValidDateRange(any(), any())).thenReturn(true);
+        when(availabilityService.canBlock(startDate, endDate, propertyId)).thenReturn(true);
         when(propertyRepository.findByExternalId(propertyId)).thenReturn(Optional.empty());
 
         Assertions.assertThrows(PropertyNotFoundException.class, () -> subject.execute(command));
 
         verify(idempotencyService, times(1)).getResponse(idempotencyKey, Block.class);
-        verify(availabilityService, times(1)).hasValidDateRange(any(), any());
+        verify(availabilityService, times(1)).canBlock(startDate, endDate, propertyId);
         verify(propertyRepository, times(1)).findByExternalId(propertyId);
         verify(blockRepository, times(0)).save(any());
     }
@@ -157,14 +157,14 @@ public class CreateBlockTest {
                 new CreateBlockCommand(propertyId, reason, startDate, endDate, idempotencyKey);
 
         when(idempotencyService.getResponse(idempotencyKey, Block.class)).thenReturn(Optional.empty());
-        when(availabilityService.hasValidDateRange(any(), any())).thenReturn(true);
+        when(availabilityService.canBlock(startDate, endDate, propertyId)).thenReturn(true);
         when(propertyRepository.findByExternalId(propertyId)).thenReturn(Optional.of(propertyEntity));
         when(blockRepository.save(any())).thenThrow(new RuntimeException("an exception"));
 
         Assertions.assertThrows(BlockGenericException.class, () -> subject.execute(command));
 
         verify(idempotencyService, times(1)).getResponse(idempotencyKey, Block.class);
-        verify(availabilityService, times(1)).hasValidDateRange(any(), any());
+        verify(availabilityService, times(1)).canBlock(startDate, endDate, propertyId);
         verify(propertyRepository, times(1)).findByExternalId(propertyId);
         verify(blockRepository, times(1)).save(any());
     }
@@ -195,9 +195,7 @@ public class CreateBlockTest {
         });
 
         verify(idempotencyService, times(1)).getResponse(idempotencyKey, Block.class);
-        verify(availabilityService, times(0)).hasValidDateRange(any(), any());
-        verify(propertyRepository, times(0)).findByExternalId(propertyId);
-        verify(blockRepository, times(0)).save(any());
+        verifyNoInteractions(availabilityService, propertyRepository, blockRepository);
     }
 
     @Test
@@ -217,9 +215,7 @@ public class CreateBlockTest {
         Assertions.assertThrows(RuntimeException.class, () -> subject.execute(command));
 
         verify(idempotencyService, times(1)).getResponse(idempotencyKey, Block.class);
-        verify(availabilityService, times(0)).hasValidDateRange(any(), any());
-        verify(propertyRepository, times(0)).findByExternalId(propertyId);
-        verify(blockRepository, times(0)).save(any());
+        verifyNoInteractions(availabilityService, propertyRepository, blockRepository);
     }
 
     private static Stream<Arguments> provideRanges() {

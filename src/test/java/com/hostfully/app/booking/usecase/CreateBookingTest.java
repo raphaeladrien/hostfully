@@ -9,7 +9,7 @@ import com.hostfully.app.availability.service.AvailabilityService;
 import com.hostfully.app.booking.domain.Booking;
 import com.hostfully.app.booking.exception.BookingGenericException;
 import com.hostfully.app.booking.exception.OverlapBookingException;
-import com.hostfully.app.booking.usecase.CreateBookingUseCase.CreateBookingCommand;
+import com.hostfully.app.booking.usecase.CreateBooking.CreateBookingCommand;
 import com.hostfully.app.infra.entity.BookingEntity;
 import com.hostfully.app.infra.entity.PropertyEntity;
 import com.hostfully.app.infra.exception.PropertyNotFoundException;
@@ -29,7 +29,7 @@ import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;
 
-class CreateBookingUseCaseTest {
+class CreateBookingTest {
 
     private final IdempotencyService idempotencyService = mock(IdempotencyService.class);
     private final NanoIdGenerator nanoIdGenerator = mock(NanoIdGenerator.class);
@@ -37,7 +37,7 @@ class CreateBookingUseCaseTest {
     private final AvailabilityService availabilityService = mock(AvailabilityService.class);
     private final PropertyRepository propertyRepository = mock(PropertyRepository.class);
     private final BookingRepository bookingRepository = mock(BookingRepository.class);
-    private final CreateBookingUseCase subject = new CreateBookingUseCase(
+    private final CreateBooking subject = new CreateBooking(
             idempotencyService, nanoIdGenerator, availabilityService, propertyRepository, bookingRepository);
 
     @Test

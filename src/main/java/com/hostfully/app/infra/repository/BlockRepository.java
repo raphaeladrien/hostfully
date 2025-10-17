@@ -15,10 +15,9 @@ public interface BlockRepository extends JpaRepository<BlockEntity, Long> {
 
     @Query("SELECT CASE WHEN COUNT(b) > 0 THEN true ELSE false END FROM BlockEntity b"
             + "        WHERE b.property.externalId = :propertyId"
-            + "        AND (:externalId IS NULL OR b.externalId <> :externalId)"
             + "        AND b.startDate < :endDate"
             + "        AND b.endDate > :startDate")
-    Boolean hasOverlapping(String propertyId, LocalDate startDate, LocalDate endDate, String externalId);
+    Boolean hasOverlapping(String propertyId, LocalDate startDate, LocalDate endDate);
 
     @Modifying
     @Transactional

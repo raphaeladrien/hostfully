@@ -25,9 +25,9 @@ import org.springframework.stereotype.Service;
 
 @Service
 @AllArgsConstructor
-public class CreateBookingUseCase {
+public class CreateBooking {
 
-    private static final Logger log = LoggerFactory.getLogger(CreateBookingUseCase.class);
+    private static final Logger log = LoggerFactory.getLogger(CreateBooking.class);
 
     private final IdempotencyService idempotencyService;
     private final NanoIdGenerator nanoIdGenerator;

@@ -3,12 +3,15 @@ package com.hostfully.app.block.usecase;
 import com.hostfully.app.availability.service.AvailabilityService;
 import com.hostfully.app.block.domain.Block;
 import com.hostfully.app.block.exceptions.BlockGenericException;
+import com.hostfully.app.block.exceptions.OverlapBlockException;
 import com.hostfully.app.infra.entity.PropertyEntity;
+import com.hostfully.app.infra.exception.InvalidDateRangeException;
 import com.hostfully.app.infra.exception.PropertyNotFoundException;
 import com.hostfully.app.infra.mapper.BlockMapper;
 import com.hostfully.app.infra.repository.BlockRepository;
 import com.hostfully.app.infra.repository.PropertyRepository;
 import com.hostfully.app.shared.IdempotencyService;
+import com.hostfully.app.shared.util.DateRangeValidator;
 import com.hostfully.app.shared.util.NanoIdGenerator;
 import jakarta.transaction.Transactional;
 import java.time.LocalDate;
@@ -44,7 +47,12 @@ public class CreateBlock {
                 createBlockCommand.startDate,
                 createBlockCommand.endDate);
 
-        availabilityService.hasValidDateRange(block, false);
+        if (!DateRangeValidator.validateDateRange(block.getStartDate(), block.getEndDate(), true))
+            throw new InvalidDateRangeException("Start date must be before end date");
+
+        if (!availabilityService.canBlock(block.getStartDate(), block.getEndDate(), block.getPropertyId()))
+            throw new OverlapBlockException("The requested block cannot be scheduled within the provided timeframe");
+
         final PropertyEntity propertyEntity = getProperty(block.getPropertyId());
         try {
             final Block blockResult =

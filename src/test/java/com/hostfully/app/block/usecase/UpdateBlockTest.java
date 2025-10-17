@@ -40,7 +40,7 @@ public class UpdateBlockTest {
         final UpdateBlockCommand updateBlockCommand = new UpdateBlockCommand(id, property, reason, startDate, endDate);
 
         when(blockRepository.existsByExternalId(updateBlockCommand.id())).thenReturn(true);
-        when(availabilityService.hasValidDateRange(any(), any())).thenReturn(true);
+        when(availabilityService.canBlock(startDate, endDate, property)).thenReturn(true);
         when(propertyRepository.findByExternalId(property)).thenReturn(Optional.of(propertyEntity));
         when(blockRepository.updateByExternalId(propertyEntity, reason, startDate, endDate, id))
                 .thenReturn(1);
@@ -58,7 +58,7 @@ public class UpdateBlockTest {
         });
 
         verify(blockRepository, times(1)).existsByExternalId(updateBlockCommand.id());
-        verify(availabilityService, times(1)).hasValidDateRange(any(), any());
+        verify(availabilityService, times(1)).canBlock(startDate, endDate, property);
         verify(propertyRepository, times(1)).findByExternalId(property);
         verify(blockRepository, times(1)).updateByExternalId(propertyEntity, reason, startDate, endDate, id);
         verify(blockRepository, times(1)).findByExternalId(id);
@@ -75,10 +75,8 @@ public class UpdateBlockTest {
                 .isInstanceOf(BlockNotFoundException.class);
 
         verify(blockRepository, times(1)).existsByExternalId(updateBlockCommand.id());
-        verify(availabilityService, times(0)).hasValidDateRange(any(), any());
-        verify(propertyRepository, times(0)).findByExternalId(property);
-        verify(blockRepository, times(0)).updateByExternalId(propertyEntity, reason, startDate, endDate, id);
-        verify(blockRepository, times(0)).findByExternalId(id);
+        verifyNoInteractions(availabilityService, propertyRepository);
+        verifyNoMoreInteractions(blockRepository);
     }
 
     @Test
@@ -90,16 +88,15 @@ public class UpdateBlockTest {
         final UpdateBlockCommand updateBlockCommand = new UpdateBlockCommand(id, property, reason, startDate, endDate);
 
         when(blockRepository.existsByExternalId(updateBlockCommand.id())).thenReturn(true);
-        when(availabilityService.hasValidDateRange(any(), any())).thenThrow(new InvalidDateRangeException("a error"));
+        when(availabilityService.canBlock(startDate, endDate, property))
+                .thenThrow(new InvalidDateRangeException("a error"));
 
         Assertions.assertThatThrownBy(() -> subject.execute(updateBlockCommand))
                 .isInstanceOf(InvalidDateRangeException.class);
 
         verify(blockRepository, times(1)).existsByExternalId(updateBlockCommand.id());
-        verify(availabilityService, times(1)).hasValidDateRange(any(), any());
-        verify(propertyRepository, times(0)).findByExternalId(property);
-        verify(blockRepository, times(0)).updateByExternalId(propertyEntity, reason, startDate, endDate, id);
-        verify(blockRepository, times(0)).findByExternalId(id);
+        verifyNoInteractions(availabilityService, propertyRepository);
+        verifyNoMoreInteractions(blockRepository);
     }
 
     @Test
@@ -108,16 +105,16 @@ public class UpdateBlockTest {
         final UpdateBlockCommand updateBlockCommand = new UpdateBlockCommand(id, property, reason, startDate, endDate);
 
         when(blockRepository.existsByExternalId(updateBlockCommand.id())).thenReturn(true);
-        when(availabilityService.hasValidDateRange(any(), any())).thenThrow(new OverlapBlockException("a error"));
+        when(availabilityService.canBlock(startDate, endDate, property))
+                .thenThrow(new OverlapBlockException("a error"));
 
         Assertions.assertThatThrownBy(() -> subject.execute(updateBlockCommand))
                 .isInstanceOf(OverlapBlockException.class);
 
         verify(blockRepository, times(1)).existsByExternalId(updateBlockCommand.id());
-        verify(availabilityService, times(1)).hasValidDateRange(any(), any());
-        verify(propertyRepository, times(0)).findByExternalId(property);
-        verify(blockRepository, times(0)).updateByExternalId(propertyEntity, reason, startDate, endDate, id);
-        verify(blockRepository, times(0)).findByExternalId(id);
+        verify(availabilityService, times(1)).canBlock(startDate, endDate, property);
+        verifyNoInteractions(propertyRepository);
+        verifyNoMoreInteractions(blockRepository);
     }
 
     @Test
@@ -126,17 +123,16 @@ public class UpdateBlockTest {
         final UpdateBlockCommand updateBlockCommand = new UpdateBlockCommand(id, property, reason, startDate, endDate);
 
         when(blockRepository.existsByExternalId(updateBlockCommand.id())).thenReturn(true);
-        when(availabilityService.hasValidDateRange(any(), any())).thenReturn(true);
+        when(availabilityService.canBlock(startDate, endDate, property)).thenReturn(true);
         when(propertyRepository.findByExternalId(property)).thenReturn(Optional.empty());
 
         Assertions.assertThatThrownBy(() -> subject.execute(updateBlockCommand))
                 .isInstanceOf(PropertyNotFoundException.class);
 
         verify(blockRepository, times(1)).existsByExternalId(updateBlockCommand.id());
-        verify(availabilityService, times(1)).hasValidDateRange(any(), any());
+        verify(availabilityService, times(1)).canBlock(startDate, endDate, property);
         verify(propertyRepository, times(1)).findByExternalId(property);
-        verify(blockRepository, times(0)).updateByExternalId(propertyEntity, reason, startDate, endDate, id);
-        verify(blockRepository, times(0)).findByExternalId(id);
+        verifyNoMoreInteractions(blockRepository);
     }
 
     @Test
@@ -145,7 +141,7 @@ public class UpdateBlockTest {
         final UpdateBlockCommand updateBlockCommand = new UpdateBlockCommand(id, property, reason, startDate, endDate);
 
         when(blockRepository.existsByExternalId(updateBlockCommand.id())).thenReturn(true);
-        when(availabilityService.hasValidDateRange(any(), any())).thenReturn(true);
+        when(availabilityService.canBlock(startDate, endDate, property)).thenReturn(true);
         when(propertyRepository.findByExternalId(property)).thenReturn(Optional.of(propertyEntity));
         when(blockRepository.updateByExternalId(propertyEntity, reason, startDate, endDate, id))
                 .thenThrow(new RuntimeException("a error"));
@@ -154,7 +150,7 @@ public class UpdateBlockTest {
                 .isInstanceOf(BlockGenericException.class);
 
         verify(blockRepository, times(1)).existsByExternalId(updateBlockCommand.id());
-        verify(availabilityService, times(1)).hasValidDateRange(any(), any());
+        verify(availabilityService, times(1)).canBlock(startDate, endDate, property);
         verify(propertyRepository, times(1)).findByExternalId(property);
         verify(blockRepository, times(1)).updateByExternalId(propertyEntity, reason, startDate, endDate, id);
         verify(blockRepository, times(0)).findByExternalId(id);
@@ -166,7 +162,7 @@ public class UpdateBlockTest {
         final UpdateBlockCommand updateBlockCommand = new UpdateBlockCommand(id, property, reason, startDate, endDate);
 
         when(blockRepository.existsByExternalId(updateBlockCommand.id())).thenReturn(true);
-        when(availabilityService.hasValidDateRange(any(), any())).thenReturn(true);
+        when(availabilityService.canBlock(startDate, endDate, property)).thenReturn(true);
         when(propertyRepository.findByExternalId(property)).thenReturn(Optional.of(propertyEntity));
         when(blockRepository.updateByExternalId(propertyEntity, reason, startDate, endDate, id))
                 .thenReturn(1);
@@ -176,7 +172,7 @@ public class UpdateBlockTest {
                 .isInstanceOf(BlockNotFoundException.class);
 
         verify(blockRepository, times(1)).existsByExternalId(updateBlockCommand.id());
-        verify(availabilityService, times(1)).hasValidDateRange(any(), any());
+        verify(availabilityService, times(1)).canBlock(startDate, endDate, property);
         verify(propertyRepository, times(1)).findByExternalId(property);
         verify(blockRepository, times(1)).updateByExternalId(propertyEntity, reason, startDate, endDate, id);
         verify(blockRepository, times(1)).findByExternalId(id);
