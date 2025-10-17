@@ -9,6 +9,7 @@ import com.hostfully.app.booking.controller.dto.BookingRequest;
 import com.hostfully.app.booking.domain.Booking;
 import com.hostfully.app.booking.exception.BookingGenericException;
 import com.hostfully.app.booking.exception.BookingNotFoundException;
+import com.hostfully.app.booking.usecase.CancelBooking;
 import com.hostfully.app.booking.usecase.CreateBooking;
 import com.hostfully.app.booking.usecase.DeleteBooking;
 import com.hostfully.app.booking.usecase.GetBooking;
@@ -45,6 +46,9 @@ public class BookingControllerTest {
 
     @MockitoBean
     private GetBooking getBooking;
+
+    @MockitoBean
+    private CancelBooking cancelBooking;
 
     private final String url = "/v1/bookings";
 
@@ -191,6 +195,64 @@ public class BookingControllerTest {
         Mockito.when(getBooking.execute(id)).thenThrow(new BookingGenericException("a error", null));
 
         final MockHttpServletRequestBuilder request = get(url + "/" + id);
+
+        mvc.perform(request).andExpect(status().isInternalServerError());
+    }
+
+    @Test
+    @DisplayName("POST /bookings/{id}/cancel - booking canceled successfully")
+    void postCancelBookingSuccess() throws Exception {
+        final String id = "a-super-id";
+        final String url = this.url + "/" + id + "/cancel";
+        final UUID idempotencyKey = UUID.randomUUID();
+
+        Mockito.when(cancelBooking.execute(id, idempotencyKey)).thenReturn(buildBooking());
+
+        final MockHttpServletRequestBuilder request = post(url).header("Idempotency-Key", UUID.randomUUID());
+
+        mvc.perform(request).andExpect(status().isOk());
+    }
+
+    @Test
+    @DisplayName("POST /bookings/{id}/cancel - error: missing idempotency header")
+    void postCancelBookingMissingIdempotencyHeader() throws Exception {
+        final String id = "a-super-id";
+        final String url = this.url + "/" + id + "/cancel";
+        final UUID idempotencyKey = UUID.randomUUID();
+
+        Mockito.when(cancelBooking.execute(id, idempotencyKey)).thenReturn(buildBooking());
+
+        final MockHttpServletRequestBuilder request = post(url);
+
+        mvc.perform(request).andExpect(status().isBadRequest());
+    }
+
+    @Test
+    @DisplayName("POST /bookings/{id}/cancel - error: booking not found")
+    void postCancelBookingThrowBookingNotFound() throws Exception {
+        final String id = "a-super-id";
+        final String url = this.url + "/" + id + "/cancel";
+
+        Mockito.when(cancelBooking.execute(Mockito.any(), Mockito.any()))
+                .thenThrow(new BookingNotFoundException("error"));
+
+        final MockHttpServletRequestBuilder request = post(url).header("Idempotency-Key", UUID.randomUUID());
+        ;
+
+        mvc.perform(request).andExpect(status().isNotFound());
+    }
+
+    @Test
+    @DisplayName("POST /bookings/{id}/cancel - error: unexpected exception")
+    void postCancelBookingThrowBookingGenericException() throws Exception {
+        final String id = "a-super-id";
+        final String url = this.url + "/" + id + "/cancel";
+
+        Mockito.when(cancelBooking.execute(Mockito.any(), Mockito.any()))
+                .thenThrow(new BookingGenericException("error", null));
+
+        final MockHttpServletRequestBuilder request = post(url).header("Idempotency-Key", UUID.randomUUID());
+        ;
 
         mvc.perform(request).andExpect(status().isInternalServerError());
     }

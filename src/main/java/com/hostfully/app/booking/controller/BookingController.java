@@ -2,6 +2,7 @@ package com.hostfully.app.booking.controller;
 
 import com.hostfully.app.booking.controller.dto.BookingRequest;
 import com.hostfully.app.booking.domain.Booking;
+import com.hostfully.app.booking.usecase.CancelBooking;
 import com.hostfully.app.booking.usecase.CreateBooking;
 import com.hostfully.app.booking.usecase.CreateBooking.CreateBookingCommand;
 import com.hostfully.app.booking.usecase.DeleteBooking;
@@ -21,10 +22,11 @@ public class BookingController {
     private CreateBooking createBooking;
     private DeleteBooking deleteBooking;
     private GetBooking getBooking;
+    private CancelBooking cancelBooking;
 
     @PostMapping
     public ResponseEntity<Booking> createBooking(
-            @Valid @RequestBody BookingRequest request,
+            @Valid @RequestBody final BookingRequest request,
             @RequestHeader(value = "Idempotency-Key") final UUID idempotencyKey) {
         final Booking booking = createBooking.execute(new CreateBookingCommand(
                 request.property(),
@@ -36,14 +38,20 @@ public class BookingController {
         return ResponseEntity.status(HttpStatus.CREATED).body(booking);
     }
 
+    @PostMapping("/{id}/cancel")
+    public ResponseEntity<Booking> cancelRequest(
+            @PathVariable final String id, @RequestHeader(value = "Idempotency-Key") final UUID idempotencyKey) {
+        return ResponseEntity.ok(cancelBooking.execute(id, idempotencyKey));
+    }
+
     @DeleteMapping("/{id}")
-    public ResponseEntity<Void> deleteBooking(@PathVariable String id) {
+    public ResponseEntity<Void> deleteBooking(@PathVariable final String id) {
         deleteBooking.execute(id);
         return ResponseEntity.noContent().build();
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<Booking> getBooking(@PathVariable String id) {
+    public ResponseEntity<Booking> getBooking(@PathVariable final String id) {
         return ResponseEntity.ok(getBooking.execute(id));
     }
 }

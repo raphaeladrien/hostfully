@@ -140,6 +140,26 @@ public class BookingRepositoryTest {
         Assertions.assertThat(optionalBlock.isPresent()).isFalse();
     }
 
+    @Test
+    @DisplayName("update booking status by external id")
+    void updateStatusByExternalId() {
+        final String id = "qwerty-1234";
+        createAndSaveBooking(
+                id, property1, BookingStatus.CONFIRMED, LocalDate.of(2025, 1, 2), LocalDate.of(2025, 1, 5));
+        createAndSaveBooking(
+                "asert-1", property1, BookingStatus.CONFIRMED, LocalDate.of(2025, 1, 10), LocalDate.of(2025, 1, 20));
+
+        final int result = bookingRepository.updateStatus(BookingStatus.CANCELLED, id);
+        entityManager.flush();
+        entityManager.clear();
+
+        Optional<BookingEntity> entity = bookingRepository.findByExternalId(id);
+
+        Assertions.assertThat(result).isEqualTo(1);
+        Assertions.assertThat(entity.isPresent()).isTrue();
+        Assertions.assertThat(entity.get().getStatus().isCancelled()).isTrue();
+    }
+
     private static Stream<Arguments> provideOverlapRanges() {
         return Stream.of(
                 arguments(LocalDate.of(2025, 1, 1), LocalDate.of(2025, 1, 3), propertyId1),

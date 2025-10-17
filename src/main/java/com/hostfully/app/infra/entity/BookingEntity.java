@@ -71,5 +71,9 @@ public class BookingEntity extends Auditable {
                     .findFirst()
                     .orElseThrow(() -> new IllegalArgumentException("Invalid SessionType: " + value));
         }
+
+        public boolean isCancelled() {
+            return this == CANCELLED;
+        }
     }
 }

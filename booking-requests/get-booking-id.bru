@@ -1,13 +1,17 @@
 meta {
-  name: create-booking
+  name: get-booking-id
   type: http
-  seq: 5
+  seq: 6
 }
 
-post {
-  url: http://localhost:8080/v1/bookings
+get {
+  url: http://localhost:8080/v1/bookings/:id
   body: json
   auth: inherit
+}
+
+params:path {
+  id: esx_3rcYZ7qY
 }
 
 headers {
