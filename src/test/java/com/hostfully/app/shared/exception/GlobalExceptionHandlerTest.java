@@ -4,6 +4,10 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.when;
 
 import com.hostfully.app.block.exceptions.*;
+import com.hostfully.app.booking.exception.BookingGenericException;
+import com.hostfully.app.booking.exception.OverlapBookingException;
+import com.hostfully.app.infra.exception.InvalidDateRangeException;
+import com.hostfully.app.infra.exception.PropertyNotFoundException;
 import jakarta.servlet.http.HttpServletRequest;
 import java.lang.reflect.Method;
 import java.net.URI;
@@ -106,7 +110,7 @@ class GlobalExceptionHandlerTest {
     }
 
     @Test
-    @DisplayName("Should handle BlockCreationException and return internal server error")
+    @DisplayName("Should handle BlockGenericException and return internal server error")
     void shouldHandleBlockCreationException() {
         final BlockGenericException exception = new BlockGenericException("Failed to create block", null);
 
@@ -223,6 +227,46 @@ class GlobalExceptionHandlerTest {
         assertThat(problemDetail.getStatus()).isEqualTo(HttpStatus.NOT_FOUND.value());
         assertThat(problemDetail.getTitle()).isEqualTo(exception.getTitle());
         assertThat(problemDetail.getDetail()).isEqualTo("Block not found by id provided");
+        assertThat(problemDetail.getInstance()).isEqualTo(URI.create(TEST_REQUEST_URI));
+        assertThat(problemDetail.getType()).isEqualTo(URI.create("about:blank"));
+        assertThat(problemDetail.getProperties()).containsKey("timestamp");
+    }
+
+    @Test
+    @DisplayName("Should handle OverlapBookingException and return conflict status")
+    void shouldHandleOverlapBookingException() {
+        final OverlapBookingException exception = new OverlapBookingException("Block overlaps with existing block");
+
+        final ResponseEntity<ProblemDetail> response =
+                globalExceptionHandler.handleOverlapBookingException(exception, request);
+
+        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.CONFLICT);
+        assertThat(response.getBody()).isNotNull();
+
+        final ProblemDetail problemDetail = response.getBody();
+        assertThat(problemDetail.getStatus()).isEqualTo(HttpStatus.CONFLICT.value());
+        assertThat(problemDetail.getTitle()).isEqualTo(exception.getTitle());
+        assertThat(problemDetail.getDetail()).isEqualTo("Block overlaps with existing block");
+        assertThat(problemDetail.getInstance()).isEqualTo(URI.create(TEST_REQUEST_URI));
+        assertThat(problemDetail.getType()).isEqualTo(URI.create("about:blank"));
+        assertThat(problemDetail.getProperties()).containsKey("timestamp");
+    }
+
+    @Test
+    @DisplayName("Should handle BookingGenericException and return internal server error")
+    void shouldHandleBookingGenericException() {
+        final BookingGenericException exception = new BookingGenericException("Failed to create block", null);
+
+        final ResponseEntity<ProblemDetail> response =
+                globalExceptionHandler.handleBookingGenericException(exception, request);
+
+        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.INTERNAL_SERVER_ERROR);
+        assertThat(response.getBody()).isNotNull();
+
+        final ProblemDetail problemDetail = response.getBody();
+        assertThat(problemDetail.getStatus()).isEqualTo(HttpStatus.INTERNAL_SERVER_ERROR.value());
+        assertThat(problemDetail.getTitle()).isEqualTo(exception.getTitle());
+        assertThat(problemDetail.getDetail()).isEqualTo("Failed to create block");
         assertThat(problemDetail.getInstance()).isEqualTo(URI.create(TEST_REQUEST_URI));
         assertThat(problemDetail.getType()).isEqualTo(URI.create("about:blank"));
         assertThat(problemDetail.getProperties()).containsKey("timestamp");

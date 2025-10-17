@@ -1,5 +1,6 @@
 package com.hostfully.app.block.controller.dto;
 
+import com.hostfully.app.shared.util.DateRangeValidator;
 import jakarta.validation.constraints.*;
 import java.time.LocalDate;
 
@@ -21,12 +22,6 @@ public record BlockRequest(
                 LocalDate endDate) {
     @AssertTrue(message = "End date must be after start date")
     public boolean isEndAfterStart() {
-        if (startDate == null || endDate == null) {
-            return true;
-        }
-        if (!endDate.isAfter(startDate)) {
-            return startDate.isEqual(endDate);
-        }
-        return true;
+        return DateRangeValidator.validateDateRange(startDate, endDate, true);
     }
 }

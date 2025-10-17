@@ -1,10 +1,10 @@
 package com.hostfully.app.block.usecase;
 
+import com.hostfully.app.availability.service.AvailabilityService;
 import com.hostfully.app.block.domain.Block;
 import com.hostfully.app.block.exceptions.BlockGenericException;
-import com.hostfully.app.block.exceptions.PropertyNotFoundException;
-import com.hostfully.app.block.service.BlockDateValidationService;
 import com.hostfully.app.infra.entity.PropertyEntity;
+import com.hostfully.app.infra.exception.PropertyNotFoundException;
 import com.hostfully.app.infra.mapper.BlockMapper;
 import com.hostfully.app.infra.repository.BlockRepository;
 import com.hostfully.app.infra.repository.PropertyRepository;
@@ -29,7 +29,7 @@ public class CreateBlock {
     private final PropertyRepository propertyRepository;
     private final NanoIdGenerator nanoIdGenerator;
     private final IdempotencyService idempotencyService;
-    private final BlockDateValidationService blockDateValidationService;
+    private final AvailabilityService availabilityService;
 
     @Transactional
     public Block execute(final CreateBlockCommand createBlockCommand) {
@@ -44,7 +44,7 @@ public class CreateBlock {
                 createBlockCommand.startDate,
                 createBlockCommand.endDate);
 
-        blockDateValidationService.hasValidDateRange(block, false);
+        availabilityService.hasValidDateRange(block, false);
         final PropertyEntity propertyEntity = getProperty(block.getPropertyId());
         try {
             final Block blockResult =

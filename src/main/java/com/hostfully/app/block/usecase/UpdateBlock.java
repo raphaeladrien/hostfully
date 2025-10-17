@@ -1,12 +1,12 @@
 package com.hostfully.app.block.usecase;
 
+import com.hostfully.app.availability.service.AvailabilityService;
 import com.hostfully.app.block.domain.Block;
 import com.hostfully.app.block.exceptions.BlockGenericException;
 import com.hostfully.app.block.exceptions.BlockNotFoundException;
-import com.hostfully.app.block.exceptions.PropertyNotFoundException;
-import com.hostfully.app.block.service.BlockDateValidationService;
 import com.hostfully.app.infra.entity.BlockEntity;
 import com.hostfully.app.infra.entity.PropertyEntity;
+import com.hostfully.app.infra.exception.PropertyNotFoundException;
 import com.hostfully.app.infra.mapper.BlockMapper;
 import com.hostfully.app.infra.repository.BlockRepository;
 import com.hostfully.app.infra.repository.PropertyRepository;
@@ -25,7 +25,7 @@ public class UpdateBlock {
 
     private final BlockRepository blockRepository;
     private final PropertyRepository propertyRepository;
-    private final BlockDateValidationService blockDateValidationService;
+    private final AvailabilityService availabilityService;
 
     @Transactional
     public Block execute(final UpdateBlockCommand updateBlockCommand) {
@@ -39,7 +39,7 @@ public class UpdateBlock {
         if (!blockRepository.existsByExternalId(block.getId()))
             throw new BlockNotFoundException("Block not found by id provided");
 
-        blockDateValidationService.hasValidDateRange(block, true);
+        availabilityService.hasValidDateRange(block, true);
 
         final PropertyEntity propertyEntity = getProperty(block.getPropertyId());
         updateBlock(propertyEntity, block);

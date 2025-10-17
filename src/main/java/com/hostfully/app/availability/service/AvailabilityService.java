@@ -1,18 +1,26 @@
-package com.hostfully.app.block.service;
+package com.hostfully.app.availability.service;
 
 import com.hostfully.app.block.domain.Block;
-import com.hostfully.app.block.exceptions.InvalidDateRangeException;
 import com.hostfully.app.block.exceptions.OverlapBlockException;
+import com.hostfully.app.infra.exception.InvalidDateRangeException;
 import com.hostfully.app.infra.repository.BlockRepository;
+import com.hostfully.app.infra.repository.BookingRepository;
 import java.time.LocalDate;
 import lombok.AllArgsConstructor;
 import org.springframework.stereotype.Service;
 
 @Service
 @AllArgsConstructor
-public class BlockDateValidationService {
+public class AvailabilityService {
 
     private final BlockRepository blockRepository;
+    private final BookingRepository bookingRepository;
+
+    public Boolean canBook(
+            final LocalDate startDate, final LocalDate endDate, final String propertyId, final String bookingId) {
+        return !bookingRepository.hasOverlapping(propertyId, startDate, endDate, bookingId)
+                && !blockRepository.hasOverlapping(propertyId, startDate, endDate, null);
+    }
 
     public Boolean hasValidDateRange(final Block block, final Boolean isUpdate) {
         final LocalDate endDate = block.getEndDate();

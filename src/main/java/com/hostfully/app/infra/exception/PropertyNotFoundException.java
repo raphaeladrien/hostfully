@@ -1,4 +1,4 @@
-package com.hostfully.app.block.exceptions;
+package com.hostfully.app.infra.exception;
 
 public class PropertyNotFoundException extends RuntimeException {
     public PropertyNotFoundException(String msg) {

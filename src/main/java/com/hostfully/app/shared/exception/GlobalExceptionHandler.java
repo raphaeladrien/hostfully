@@ -1,6 +1,10 @@
 package com.hostfully.app.shared.exception;
 
 import com.hostfully.app.block.exceptions.*;
+import com.hostfully.app.booking.exception.BookingGenericException;
+import com.hostfully.app.booking.exception.OverlapBookingException;
+import com.hostfully.app.infra.exception.InvalidDateRangeException;
+import com.hostfully.app.infra.exception.PropertyNotFoundException;
 import jakarta.servlet.http.HttpServletRequest;
 import java.net.URI;
 import java.time.Instant;
@@ -149,5 +153,34 @@ public class GlobalExceptionHandler {
         problemDetail.setProperty("timestamp", Instant.now());
 
         return ResponseEntity.status(HttpStatus.NOT_FOUND).body(problemDetail);
+    }
+
+    @ExceptionHandler(OverlapBookingException.class)
+    public ResponseEntity<ProblemDetail> handleOverlapBookingException(
+            OverlapBookingException ex, HttpServletRequest request) {
+
+        ProblemDetail problemDetail = ProblemDetail.forStatusAndDetail(HttpStatus.CONFLICT, ex.getMessage());
+
+        problemDetail.setType(URI.create(PROBLEM_BASE_URL));
+        problemDetail.setTitle(ex.getTitle());
+        problemDetail.setInstance(URI.create(request.getRequestURI()));
+        problemDetail.setProperty("timestamp", Instant.now());
+
+        return ResponseEntity.status(HttpStatus.CONFLICT).body(problemDetail);
+    }
+
+    @ExceptionHandler(BookingGenericException.class)
+    public ResponseEntity<ProblemDetail> handleBookingGenericException(
+            BookingGenericException ex, HttpServletRequest request) {
+
+        ProblemDetail problemDetail =
+                ProblemDetail.forStatusAndDetail(HttpStatus.INTERNAL_SERVER_ERROR, ex.getMessage());
+
+        problemDetail.setType(URI.create(PROBLEM_BASE_URL));
+        problemDetail.setTitle(ex.getTitle());
+        problemDetail.setInstance(URI.create(request.getRequestURI()));
+        problemDetail.setProperty("timestamp", Instant.now());
+
+        return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(problemDetail);
     }
 }

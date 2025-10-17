@@ -4,15 +4,15 @@ import static org.junit.jupiter.params.provider.Arguments.arguments;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
 
+import com.hostfully.app.availability.service.AvailabilityService;
 import com.hostfully.app.block.domain.Block;
 import com.hostfully.app.block.exceptions.BlockGenericException;
-import com.hostfully.app.block.exceptions.InvalidDateRangeException;
 import com.hostfully.app.block.exceptions.OverlapBlockException;
-import com.hostfully.app.block.exceptions.PropertyNotFoundException;
-import com.hostfully.app.block.service.BlockDateValidationService;
 import com.hostfully.app.block.usecase.CreateBlock.CreateBlockCommand;
 import com.hostfully.app.infra.entity.BlockEntity;
 import com.hostfully.app.infra.entity.PropertyEntity;
+import com.hostfully.app.infra.exception.InvalidDateRangeException;
+import com.hostfully.app.infra.exception.PropertyNotFoundException;
 import com.hostfully.app.infra.repository.BlockRepository;
 import com.hostfully.app.infra.repository.PropertyRepository;
 import com.hostfully.app.shared.IdempotencyService;
@@ -42,10 +42,10 @@ public class CreateBlockTest {
     private final PropertyRepository propertyRepository = mock(PropertyRepository.class);
     private final NanoIdGenerator nanoIdGenerator = mock(NanoIdGenerator.class);
     private final IdempotencyService idempotencyService = mock(IdempotencyService.class);
-    private final BlockDateValidationService blockDateValidationService = mock(BlockDateValidationService.class);
+    private final AvailabilityService availabilityService = mock(AvailabilityService.class);
 
     private final CreateBlock subject = new CreateBlock(
-            blockRepository, propertyRepository, nanoIdGenerator, idempotencyService, blockDateValidationService);
+            blockRepository, propertyRepository, nanoIdGenerator, idempotencyService, availabilityService);
 
     @BeforeEach
     public void setup() {
@@ -59,7 +59,7 @@ public class CreateBlockTest {
                 new CreateBlockCommand(propertyId, reason, startDate, endDate, idempotencyKey);
 
         when(idempotencyService.getResponse(idempotencyKey, Block.class)).thenReturn(Optional.empty());
-        when(blockDateValidationService.hasValidDateRange(any(), any())).thenReturn(true);
+        when(availabilityService.hasValidDateRange(any(), any())).thenReturn(true);
         when(propertyRepository.findByExternalId(propertyId)).thenReturn(Optional.of(propertyEntity));
         when(blockRepository.save(any())).thenReturn(build(propertyEntity, reason, startDate, endDate));
 
@@ -74,7 +74,7 @@ public class CreateBlockTest {
         });
 
         verify(idempotencyService, times(1)).getResponse(idempotencyKey, Block.class);
-        verify(blockDateValidationService, times(1)).hasValidDateRange(any(), any());
+        verify(availabilityService, times(1)).hasValidDateRange(any(), any());
         verify(propertyRepository, times(1)).findByExternalId(propertyId);
         verify(blockRepository, times(1)).save(any());
     }
@@ -86,13 +86,12 @@ public class CreateBlockTest {
                 new CreateBlockCommand(propertyId, reason, startDate, endDate, idempotencyKey);
 
         when(idempotencyService.getResponse(idempotencyKey, Block.class)).thenReturn(Optional.empty());
-        when(blockDateValidationService.hasValidDateRange(any(), any()))
-                .thenThrow(new InvalidDateRangeException("an error"));
+        when(availabilityService.hasValidDateRange(any(), any())).thenThrow(new InvalidDateRangeException("an error"));
 
         Assertions.assertThrows(InvalidDateRangeException.class, () -> subject.execute(command));
 
         verify(idempotencyService, times(1)).getResponse(idempotencyKey, Block.class);
-        verify(blockDateValidationService, times(1)).hasValidDateRange(any(), any());
+        verify(availabilityService, times(1)).hasValidDateRange(any(), any());
         verify(propertyRepository, times(0)).findByExternalId(any());
         verify(blockRepository, times(0)).save(any());
     }
@@ -110,13 +109,12 @@ public class CreateBlockTest {
                 new CreateBlockCommand(propertyId, reason, startDate, endDate, idempotencyKey);
 
         when(idempotencyService.getResponse(idempotencyKey, Block.class)).thenReturn(Optional.empty());
-        when(blockDateValidationService.hasValidDateRange(any(), any()))
-                .thenThrow(new OverlapBlockException("an error"));
+        when(availabilityService.hasValidDateRange(any(), any())).thenThrow(new OverlapBlockException("an error"));
 
         Assertions.assertThrows(OverlapBlockException.class, () -> subject.execute(command));
 
         verify(idempotencyService, times(1)).getResponse(idempotencyKey, Block.class);
-        verify(blockDateValidationService, times(1)).hasValidDateRange(any(), any());
+        verify(availabilityService, times(1)).hasValidDateRange(any(), any());
         verify(propertyRepository, times(0)).findByExternalId(any());
         verify(blockRepository, times(0)).save(any());
     }
@@ -134,13 +132,13 @@ public class CreateBlockTest {
                 new CreateBlockCommand(propertyId, reason, startDate, endDate, idempotencyKey);
 
         when(idempotencyService.getResponse(idempotencyKey, Block.class)).thenReturn(Optional.empty());
-        when(blockDateValidationService.hasValidDateRange(any(), any())).thenReturn(true);
+        when(availabilityService.hasValidDateRange(any(), any())).thenReturn(true);
         when(propertyRepository.findByExternalId(propertyId)).thenReturn(Optional.empty());
 
         Assertions.assertThrows(PropertyNotFoundException.class, () -> subject.execute(command));
 
         verify(idempotencyService, times(1)).getResponse(idempotencyKey, Block.class);
-        verify(blockDateValidationService, times(1)).hasValidDateRange(any(), any());
+        verify(availabilityService, times(1)).hasValidDateRange(any(), any());
         verify(propertyRepository, times(1)).findByExternalId(propertyId);
         verify(blockRepository, times(0)).save(any());
     }
@@ -159,14 +157,14 @@ public class CreateBlockTest {
                 new CreateBlockCommand(propertyId, reason, startDate, endDate, idempotencyKey);
 
         when(idempotencyService.getResponse(idempotencyKey, Block.class)).thenReturn(Optional.empty());
-        when(blockDateValidationService.hasValidDateRange(any(), any())).thenReturn(true);
+        when(availabilityService.hasValidDateRange(any(), any())).thenReturn(true);
         when(propertyRepository.findByExternalId(propertyId)).thenReturn(Optional.of(propertyEntity));
         when(blockRepository.save(any())).thenThrow(new RuntimeException("an exception"));
 
         Assertions.assertThrows(BlockGenericException.class, () -> subject.execute(command));
 
         verify(idempotencyService, times(1)).getResponse(idempotencyKey, Block.class);
-        verify(blockDateValidationService, times(1)).hasValidDateRange(any(), any());
+        verify(availabilityService, times(1)).hasValidDateRange(any(), any());
         verify(propertyRepository, times(1)).findByExternalId(propertyId);
         verify(blockRepository, times(1)).save(any());
     }
@@ -197,7 +195,7 @@ public class CreateBlockTest {
         });
 
         verify(idempotencyService, times(1)).getResponse(idempotencyKey, Block.class);
-        verify(blockDateValidationService, times(0)).hasValidDateRange(any(), any());
+        verify(availabilityService, times(0)).hasValidDateRange(any(), any());
         verify(propertyRepository, times(0)).findByExternalId(propertyId);
         verify(blockRepository, times(0)).save(any());
     }
@@ -219,7 +217,7 @@ public class CreateBlockTest {
         Assertions.assertThrows(RuntimeException.class, () -> subject.execute(command));
 
         verify(idempotencyService, times(1)).getResponse(idempotencyKey, Block.class);
-        verify(blockDateValidationService, times(0)).hasValidDateRange(any(), any());
+        verify(availabilityService, times(0)).hasValidDateRange(any(), any());
         verify(propertyRepository, times(0)).findByExternalId(propertyId);
         verify(blockRepository, times(0)).save(any());
     }

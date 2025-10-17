@@ -1,13 +1,85 @@
 package com.hostfully.app.booking.usecase;
 
+import com.hostfully.app.availability.service.AvailabilityService;
+import com.hostfully.app.booking.domain.Booking;
+import com.hostfully.app.booking.exception.BookingGenericException;
+import com.hostfully.app.booking.exception.OverlapBookingException;
+import com.hostfully.app.infra.entity.BookingEntity.BookingStatus;
+import com.hostfully.app.infra.entity.PropertyEntity;
+import com.hostfully.app.infra.exception.InvalidDateRangeException;
+import com.hostfully.app.infra.exception.PropertyNotFoundException;
+import com.hostfully.app.infra.mapper.BookingMapper;
+import com.hostfully.app.infra.repository.BookingRepository;
+import com.hostfully.app.infra.repository.PropertyRepository;
+import com.hostfully.app.shared.IdempotencyService;
+import com.hostfully.app.shared.util.DateRangeValidator;
+import com.hostfully.app.shared.util.NanoIdGenerator;
+import jakarta.transaction.Transactional;
+import java.time.LocalDate;
+import java.util.Optional;
+import java.util.UUID;
+import lombok.AllArgsConstructor;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 
 @Service
+@AllArgsConstructor
 public class CreateBookingUseCase {
 
-    public boolean call(final CreateBookingCommand request) {
-        return true;
+    private static final Logger log = LoggerFactory.getLogger(CreateBookingUseCase.class);
+
+    private final IdempotencyService idempotencyService;
+    private final NanoIdGenerator nanoIdGenerator;
+    private final AvailabilityService availabilityService;
+    private final PropertyRepository propertyRepository;
+    private final BookingRepository bookingRepository;
+
+    @Transactional
+    public Booking execute(final CreateBookingCommand command) {
+        final UUID idempotencyKey = command.idempotencyKey;
+        final Optional<Booking> result = idempotencyService.getResponse(idempotencyKey, Booking.class);
+        if (result.isPresent()) return result.get();
+
+        final Booking booking = new Booking(
+                nanoIdGenerator.generateId(),
+                command.property,
+                command.startDate,
+                command.endDate,
+                command.guestName,
+                command.numberGuests,
+                BookingStatus.CONFIRMED.name());
+
+        if (!DateRangeValidator.validateDateRange(booking.getStartDate(), booking.getEndDate(), false))
+            throw new InvalidDateRangeException("Start date must be before end date");
+
+        if (!availabilityService.canBook(
+                booking.getStartDate(), booking.getEndDate(), booking.getPropertyId(), booking.getId()))
+            throw new OverlapBookingException("Block already created for this property in the timeframe provided");
+
+        final PropertyEntity propertyEntity = getProperty(booking.getPropertyId());
+        try {
+            final Booking bookingResult =
+                    BookingMapper.toDomain(bookingRepository.save(BookingMapper.toEntity(booking, propertyEntity)));
+            idempotencyService.saveResponse(idempotencyKey, bookingResult);
+            return booking;
+        } catch (Exception ex) {
+            log.error("Failed to create a booking: {}", booking, ex);
+            throw new BookingGenericException("Unexpected error while creating booking", ex);
+        }
     }
 
-    public record CreateBookingCommand() {}
+    private PropertyEntity getProperty(final String propertyId) {
+        return propertyRepository
+                .findByExternalId(propertyId)
+                .orElseThrow(() -> new PropertyNotFoundException("Property not found by ID provided"));
+    }
+
+    public record CreateBookingCommand(
+            String property,
+            LocalDate startDate,
+            LocalDate endDate,
+            String guestName,
+            Integer numberGuests,
+            UUID idempotencyKey) {}
 }

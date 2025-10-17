@@ -10,6 +10,8 @@ import com.hostfully.app.block.exceptions.*;
 import com.hostfully.app.block.usecase.CreateBlock;
 import com.hostfully.app.block.usecase.DeleteBlock;
 import com.hostfully.app.block.usecase.UpdateBlock;
+import com.hostfully.app.infra.exception.InvalidDateRangeException;
+import com.hostfully.app.infra.exception.PropertyNotFoundException;
 import java.time.LocalDate;
 import java.util.UUID;
 import org.junit.jupiter.api.DisplayName;

@@ -1,4 +1,4 @@
-package com.hostfully.app.block.exceptions;
+package com.hostfully.app.infra.exception;
 
 public class InvalidDateRangeException extends RuntimeException {
     public InvalidDateRangeException(String msg) {
