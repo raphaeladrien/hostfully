@@ -1,0 +1,63 @@
+jacoco {
+	toolVersion = "0.8.11"
+}
+
+jacocoTestReport {
+	dependsOn test
+
+	reports {
+		xml.required = true
+		html.required = true
+		csv.required = false
+	}
+
+	doLast {
+		def reportFile = file("${project.layout.buildDirectory.get()}/reports/jacoco/test/jacocoTestReport.xml")
+
+		if (reportFile.exists()) {
+			def parser = new groovy.xml.XmlParser()
+			parser.setFeature("http://apache.org/xml/features/disallow-doctype-decl", false)
+			parser.setFeature("http://apache.org/xml/features/nonvalidating/load-external-dtd", false)
+
+			def report = parser.parse(reportFile)
+
+			def instructionCounter = report.counter.find { it.@type == 'INSTRUCTION' }
+			def branchCounter = report.counter.find { it.@type == 'BRANCH' }
+			def lineCounter = report.counter.find { it.@type == 'LINE' }
+			def classCounter = report.counter.find { it.@type == 'CLASS' }
+			def methodCounter = report.counter.find { it.@type == 'METHOD' }
+
+			def calculateCoverage = { counter ->
+				def covered = counter.@covered.toDouble()
+				def missed = counter.@missed.toDouble()
+				def total = covered + missed
+				return total > 0 ? (covered / total) * 100 : 0.0
+			}
+
+			def instructionCoverage = calculateCoverage(instructionCounter)
+			def branchCoverage = calculateCoverage(branchCounter)
+			def lineCoverage = calculateCoverage(lineCounter)
+			def classCoverage = calculateCoverage(classCounter)
+			def methodCoverage = calculateCoverage(methodCounter)
+
+			println ""
+			println "╔══════════════════════════════════════════════════════════════╗"
+			println "║               	TEST COVERAGE SUMMARY 		       ║"
+			println "╠══════════════════════════════════════════════════════════════╣"
+			println "║                                                            ║"
+			println "║  Instruction Coverage: ${String.format('%6.2f%%', instructionCoverage).padRight(37)}║"
+			println "║  Branch Coverage:      ${String.format('%6.2f%%', branchCoverage).padRight(37)}║"
+			println "║  Line Coverage:        ${String.format('%6.2f%%', lineCoverage).padRight(37)}║"
+			println "║  Class Coverage:       ${String.format('%6.2f%%', classCoverage).padRight(37)}║"
+			println "║  Method Coverage:      ${String.format('%6.2f%%', methodCoverage).padRight(37)}║"
+			println "║                                                            	║"
+			println "╠══════════════════════════════════════════════════════════════╣"
+			println "║  HTML Report:                                              	║"
+			println "║  ${reports.html.outputLocation.get()}/index.html".padRight(61)+"║"
+			println "╚══════════════════════════════════════════════════════════════╝"
+			println ""
+		} else {
+			println "⚠️  Coverage report not found. Make sure tests were executed."
+		}
+	}
+}
