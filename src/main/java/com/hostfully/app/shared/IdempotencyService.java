@@ -1,7 +1,6 @@
 package com.hostfully.app.shared;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.hostfully.app.block.usecase.CreateBlock;
 import com.hostfully.app.infra.entity.Idempotency;
 import com.hostfully.app.infra.repository.IdempotencyRepository;
 import java.util.Optional;

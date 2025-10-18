@@ -6,6 +6,7 @@ buildscript {
 	ext {
 		flywayCore = "11.14.0"
 		nanoId = "main-SNAPSHOT"
+		springdoc = "2.8.13"
 	}
 }
 
@@ -40,6 +41,7 @@ dependencies {
 	runtimeOnly("com.h2database:h2")
 
 	implementation("co.wosher:jnanoid-enhanced:${nanoId}")
+	implementation("org.springdoc:springdoc-openapi-starter-webmvc-ui:${springdoc}")
 
 	testImplementation("org.springframework.boot:spring-boot-starter-test") {
 		exclude group: 'junit'
