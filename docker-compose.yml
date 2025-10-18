@@ -1,0 +1,25 @@
+services:
+  tests:
+    build:
+      context: .
+      target: build
+    container_name: booking-tests
+    volumes:
+      - .:/app
+    entrypoint: [ "./gradlew", "test" ]
+    networks:
+      - hostfully
+
+  booking:
+    build:
+      context: .
+      target: booking
+    container_name: booking
+    ports:
+      - "8080:8080"
+    networks:
+      - hostfully
+
+networks:
+  hostfully:
+    driver: bridge
