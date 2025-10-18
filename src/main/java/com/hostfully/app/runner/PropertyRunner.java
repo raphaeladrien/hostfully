@@ -19,8 +19,8 @@ public class PropertyRunner implements CommandLineRunner {
     public void run(String... args) throws Exception {
 
         final List<PropertyEntity> properties = List.of(
-                new PropertyEntity("AMAZINGHOUSE", "a cozy house", "Jewel of Portland"),
-                new PropertyEntity("FLOREST", "a cozy house", "Jewel of Montana"));
+                new PropertyEntity("SunnyVilla01", "a cozy house", "Jewel of Portland"),
+                new PropertyEntity("CozyNest123", "a cozy house", "Jewel of Montana"));
 
         propertyRepository.saveAll(properties);
     }

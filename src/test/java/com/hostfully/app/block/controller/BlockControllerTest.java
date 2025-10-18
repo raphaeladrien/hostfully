@@ -231,7 +231,7 @@ public class BlockControllerTest {
     }
 
     private BlockRequest buildBlockRequest() {
-        return new BlockRequest("AMAZINGHOUSE", "painting", "an-alias", LocalDate.now(), LocalDate.now());
+        return new BlockRequest("AMAZINGHOUSE", "painting", LocalDate.now(), LocalDate.now());
     }
 
     private Block buildBlock() {
