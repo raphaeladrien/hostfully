@@ -12,6 +12,7 @@ import java.lang.reflect.Method;
 import java.net.URI;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -20,13 +21,16 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.core.MethodParameter;
+import org.springframework.http.HttpMethod;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ProblemDetail;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.BindingResult;
 import org.springframework.validation.FieldError;
+import org.springframework.web.HttpRequestMethodNotSupportedException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.MissingRequestHeaderException;
+import org.springframework.web.servlet.resource.NoResourceFoundException;
 
 @ExtendWith(MockitoExtension.class)
 @DisplayName("GlobalExceptionHandler Tests")
@@ -86,6 +90,50 @@ class GlobalExceptionHandlerTest {
         assertThat(errors).hasSize(2);
         assertThat(errors).containsEntry("fieldName1", "must not be null");
         assertThat(errors).containsEntry("fieldName2", "must be valid");
+    }
+
+    @Test
+    @DisplayName("Should handle no resource found exception and return not found")
+    void shouldHandleNoResourceFoundException() {
+        final NoResourceFoundException exception = new NoResourceFoundException(HttpMethod.GET, TEST_REQUEST_URI);
+
+        final ResponseEntity<ProblemDetail> response =
+                globalExceptionHandler.handleNoResourceFoundException(exception, request);
+
+        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.NOT_FOUND);
+        assertThat(response.getBody()).isNotNull();
+
+        final ProblemDetail problemDetail = response.getBody();
+        assertThat(problemDetail.getStatus()).isEqualTo(HttpStatus.NOT_FOUND.value());
+        assertThat(problemDetail.getTitle()).isEqualTo("Resource Not Found");
+        assertThat(problemDetail.getDetail()).isEqualTo("The requested resource was not found");
+        assertThat(problemDetail.getInstance()).isEqualTo(URI.create(TEST_REQUEST_URI));
+        assertThat(problemDetail.getType()).isEqualTo(URI.create("about:blank"));
+        assertThat(problemDetail.getProperties()).containsKey("timestamp");
+    }
+
+    @Test
+    @DisplayName("Should handle http request method not supported exception and method not allowed")
+    void shouldHttpRequestMethodNotSupportedException() {
+        final String method = "POST";
+        final Set<String> supportedMethods = Set.of(HttpMethod.GET.toString(), HttpMethod.PUT.toString());
+        final HttpRequestMethodNotSupportedException exception =
+                new HttpRequestMethodNotSupportedException(method, supportedMethods);
+
+        final ResponseEntity<ProblemDetail> response =
+                globalExceptionHandler.handleHttpRequestMethodNotSupportedException(exception, request);
+
+        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.METHOD_NOT_ALLOWED);
+        assertThat(response.getBody()).isNotNull();
+
+        final ProblemDetail problemDetail = response.getBody();
+        assertThat(problemDetail.getStatus()).isEqualTo(HttpStatus.METHOD_NOT_ALLOWED.value());
+        assertThat(problemDetail.getTitle()).isEqualTo("Method Not Allowed");
+        assertThat(problemDetail.getDetail()).isEqualTo("The HTTP method is not supported for this endpoint");
+        assertThat(problemDetail.getInstance()).isEqualTo(URI.create(TEST_REQUEST_URI));
+        assertThat(problemDetail.getType()).isEqualTo(URI.create("about:blank"));
+        assertThat(problemDetail.getProperties()).containsKey("timestamp");
+        assertThat(problemDetail.getProperties()).containsKey("supportedMethods");
     }
 
     @Test
