@@ -246,10 +246,8 @@ public class BookingRepositoryTest {
             final int numberGuest,
             final BookingStatus status,
             final LocalDate startDate,
-            final LocalDate endDate
-            ) {
-        final BookingEntity booking =
-                new BookingEntity(id, property, guest, numberGuest, status, startDate, endDate);
+            final LocalDate endDate) {
+        final BookingEntity booking = new BookingEntity(id, property, guest, numberGuest, status, startDate, endDate);
         entityManager.persist(booking);
         entityManager.flush();
         return booking.getId();

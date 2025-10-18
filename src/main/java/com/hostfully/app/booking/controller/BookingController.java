@@ -2,9 +2,11 @@ package com.hostfully.app.booking.controller;
 
 import com.hostfully.app.booking.controller.dto.BookingRequest;
 import com.hostfully.app.booking.controller.dto.RebookBookingRequest;
+import com.hostfully.app.booking.controller.dto.UpdateBookingRequest;
 import com.hostfully.app.booking.domain.Booking;
 import com.hostfully.app.booking.usecase.*;
 import com.hostfully.app.booking.usecase.CreateBooking.CreateBookingCommand;
+import com.hostfully.app.booking.usecase.UpdateBooking.UpdateBookingCommand;
 import jakarta.validation.Valid;
 import java.util.UUID;
 import lombok.AllArgsConstructor;
@@ -22,6 +24,7 @@ public class BookingController {
     private GetBooking getBooking;
     private CancelBooking cancelBooking;
     private RebookBooking rebookBooking;
+    private UpdateBooking updateBooking;
 
     @PostMapping
     public ResponseEntity<Booking> createBooking(
@@ -61,5 +64,13 @@ public class BookingController {
     @GetMapping("/{id}")
     public ResponseEntity<Booking> getBooking(@PathVariable final String id) {
         return ResponseEntity.ok(getBooking.execute(id));
+    }
+
+    @PatchMapping("/{id}")
+    public ResponseEntity<Booking> updateBooking(
+            @PathVariable final String id, @Valid @RequestBody final UpdateBookingRequest request) {
+        final Booking booking = updateBooking.execute(new UpdateBookingCommand(
+                id, request.startDate(), request.endDate(), request.guest(), request.numberGuest()));
+        return ResponseEntity.ok(booking);
     }
 }

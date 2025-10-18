@@ -1,0 +1,27 @@
+meta {
+  name: update-booking
+  type: http
+  seq: 10
+}
+
+patch {
+  url: http://localhost:8080/v1/bookings/:id
+  body: json
+  auth: inherit
+}
+
+params:path {
+  id: 0xLZJSWrKVfB
+}
+
+body:json {
+  {
+    "endDate": "2025-12-01",
+    "guest": "XPTO",
+    "numberGuest": 3
+  }
+}
+
+settings {
+  encodeUrl: true
+}

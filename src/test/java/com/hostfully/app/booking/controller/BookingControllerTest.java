@@ -7,11 +7,9 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.hostfully.app.block.exceptions.OverlapBlockException;
 import com.hostfully.app.booking.controller.dto.BookingRequest;
 import com.hostfully.app.booking.controller.dto.RebookBookingRequest;
+import com.hostfully.app.booking.controller.dto.UpdateBookingRequest;
 import com.hostfully.app.booking.domain.Booking;
-import com.hostfully.app.booking.exception.BookingGenericException;
-import com.hostfully.app.booking.exception.BookingNotFoundException;
-import com.hostfully.app.booking.exception.OverlapBookingException;
-import com.hostfully.app.booking.exception.RebookNotAllowedException;
+import com.hostfully.app.booking.exception.*;
 import com.hostfully.app.booking.usecase.*;
 import com.hostfully.app.infra.exception.InvalidDateRangeException;
 import com.hostfully.app.infra.exception.PropertyNotFoundException;
@@ -52,6 +50,9 @@ public class BookingControllerTest {
 
     @MockitoBean
     private RebookBooking rebookBooking;
+
+    @MockitoBean
+    private UpdateBooking updateBooking;
 
     private final String url = "/v1/bookings";
 
@@ -265,7 +266,6 @@ public class BookingControllerTest {
     void postRebookBookingMissingIdempotencyHeader() throws Exception {
         final String id = "a-super-id";
         final String url = this.url + "/" + id + "/rebook";
-        final UUID idempotencyKey = UUID.randomUUID();
         final RebookBookingRequest payload = buildRebookBookingRequest();
 
         Mockito.when(rebookBooking.execute(Mockito.any())).thenReturn(buildBooking());
@@ -281,7 +281,6 @@ public class BookingControllerTest {
     void postRebookBookingSuccess() throws Exception {
         final String id = "a-super-id";
         final String url = this.url + "/" + id + "/rebook";
-        final UUID idempotencyKey = UUID.randomUUID();
         final RebookBookingRequest payload = buildRebookBookingRequest();
 
         Mockito.when(rebookBooking.execute(Mockito.any())).thenReturn(buildBooking());
@@ -299,7 +298,6 @@ public class BookingControllerTest {
     void postRebookBookingRebookNotAllowedException() throws Exception {
         final String id = "a-super-id";
         final String url = this.url + "/" + id + "/rebook";
-        final UUID idempotencyKey = UUID.randomUUID();
         final RebookBookingRequest payload = buildRebookBookingRequest();
 
         Mockito.when(rebookBooking.execute(Mockito.any())).thenThrow(new RebookNotAllowedException("error"));
@@ -317,7 +315,6 @@ public class BookingControllerTest {
     void postRebookBookingRebookInvalidDateRangeException() throws Exception {
         final String id = "a-super-id";
         final String url = this.url + "/" + id + "/rebook";
-        final UUID idempotencyKey = UUID.randomUUID();
         final RebookBookingRequest payload = buildRebookBookingRequest();
 
         Mockito.when(rebookBooking.execute(Mockito.any())).thenThrow(new InvalidDateRangeException("error"));
@@ -335,7 +332,6 @@ public class BookingControllerTest {
     void postRebookBookingRebookOverlapBookingException() throws Exception {
         final String id = "a-super-id";
         final String url = this.url + "/" + id + "/rebook";
-        final UUID idempotencyKey = UUID.randomUUID();
         final RebookBookingRequest payload = buildRebookBookingRequest();
 
         Mockito.when(rebookBooking.execute(Mockito.any())).thenThrow(new OverlapBookingException("error"));
@@ -353,7 +349,6 @@ public class BookingControllerTest {
     void postRebookBookingRebookBookingNotFoundException() throws Exception {
         final String id = "a-super-id";
         final String url = this.url + "/" + id + "/rebook";
-        final UUID idempotencyKey = UUID.randomUUID();
         final RebookBookingRequest payload = buildRebookBookingRequest();
 
         Mockito.when(rebookBooking.execute(Mockito.any())).thenThrow(new BookingNotFoundException("error"));
@@ -371,7 +366,6 @@ public class BookingControllerTest {
     void postRebookBookingRebookBookingGenericException() throws Exception {
         final String id = "a-super-id";
         final String url = this.url + "/" + id + "/rebook";
-        final UUID idempotencyKey = UUID.randomUUID();
         final RebookBookingRequest payload = buildRebookBookingRequest();
 
         Mockito.when(rebookBooking.execute(Mockito.any())).thenThrow(new BookingGenericException("error", null));
@@ -384,8 +378,87 @@ public class BookingControllerTest {
         mvc.perform(request).andExpect(status().isInternalServerError());
     }
 
+    @Test
+    @DisplayName("PATCH /bookings/{id} - booking updated successfully")
+    void patchUpdateBookingSuccess() throws Exception {
+        final String id = "a-super-id";
+        final UpdateBookingRequest payload = buildUpdateBookingRequest();
+
+        Mockito.when(updateBooking.execute(Mockito.any())).thenReturn(buildBooking());
+
+        final MockHttpServletRequestBuilder request = patch(url + "/" + id)
+                .contentType(MediaType.APPLICATION_JSON_VALUE)
+                .content(mapper.writeValueAsString(payload));
+
+        mvc.perform(request).andExpect(status().isOk());
+    }
+
+    @Test
+    @DisplayName("PATCH /bookings/{id} - error updated not allowed")
+    void patchUpdateBookingNotAllowed() throws Exception {
+        final String id = "a-super-id";
+        final UpdateBookingRequest payload = buildUpdateBookingRequest();
+
+        Mockito.when(updateBooking.execute(Mockito.any())).thenThrow(new UpdateNotAllowedException("error"));
+
+        final MockHttpServletRequestBuilder request = patch(url + "/" + id)
+                .contentType(MediaType.APPLICATION_JSON_VALUE)
+                .content(mapper.writeValueAsString(payload));
+
+        mvc.perform(request).andExpect(status().isConflict());
+    }
+
+    @Test
+    @DisplayName("PATCH /bookings/{id} - error invalid date range")
+    void patchUpdateBookingInvalidDateRange() throws Exception {
+        final String id = "a-super-id";
+        final UpdateBookingRequest payload = buildUpdateBookingRequest();
+
+        Mockito.when(updateBooking.execute(Mockito.any())).thenThrow(new InvalidDateRangeException("error"));
+
+        final MockHttpServletRequestBuilder request = patch(url + "/" + id)
+                .contentType(MediaType.APPLICATION_JSON_VALUE)
+                .content(mapper.writeValueAsString(payload));
+
+        mvc.perform(request).andExpect(status().isBadRequest());
+    }
+
+    @Test
+    @DisplayName("PATCH /bookings/{id} - error overlap booking")
+    void patchUpdateBookingOverlapBooking() throws Exception {
+        final String id = "a-super-id";
+        final UpdateBookingRequest payload = buildUpdateBookingRequest();
+
+        Mockito.when(updateBooking.execute(Mockito.any())).thenThrow(new OverlapBookingException("error"));
+
+        final MockHttpServletRequestBuilder request = patch(url + "/" + id)
+                .contentType(MediaType.APPLICATION_JSON_VALUE)
+                .content(mapper.writeValueAsString(payload));
+
+        mvc.perform(request).andExpect(status().isConflict());
+    }
+
+    @Test
+    @DisplayName("PATCH /bookings/{id} - error unexpected error")
+    void patchUpdateUnexpectedError() throws Exception {
+        final String id = "a-super-id";
+        final UpdateBookingRequest payload = buildUpdateBookingRequest();
+
+        Mockito.when(updateBooking.execute(Mockito.any())).thenThrow(new BookingGenericException("error", null));
+
+        final MockHttpServletRequestBuilder request = patch(url + "/" + id)
+                .contentType(MediaType.APPLICATION_JSON_VALUE)
+                .content(mapper.writeValueAsString(payload));
+
+        mvc.perform(request).andExpect(status().isInternalServerError());
+    }
+
     private RebookBookingRequest buildRebookBookingRequest() {
         return new RebookBookingRequest(startDate, endDate);
+    }
+
+    private UpdateBookingRequest buildUpdateBookingRequest() {
+        return new UpdateBookingRequest(startDate, endDate, guest, 4);
     }
 
     private BookingRequest buildBookingRequest() {

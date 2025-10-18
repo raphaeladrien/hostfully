@@ -32,7 +32,7 @@ public class UpdateBooking {
     public Booking execute(final UpdateBookingCommand command) {
         final BookingEntity entity = getBooking(command.id);
 
-        if (!canUpdate(entity.getStatus().name()))
+        if (!canUpdate(entity.getStatus()))
             throw new UpdateNotAllowedException("Booking updates are allowed only when the booking is active");
 
         final Booking booking = buildDomain(entity, command);
@@ -61,8 +61,8 @@ public class UpdateBooking {
         }
     }
 
-    private boolean canUpdate(String status) {
-        return "CONFIRMED".equals(status);
+    private boolean canUpdate(BookingEntity.BookingStatus status) {
+        return !status.isCancelled();
     }
 
     private Booking buildDomain(final BookingEntity entity, final UpdateBookingCommand command) {
