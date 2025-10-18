@@ -26,7 +26,7 @@ import org.springframework.stereotype.Service;
 @AllArgsConstructor
 public class RebookBooking {
 
-    private static final Logger log = LoggerFactory.getLogger(GetBooking.class);
+    private static final Logger log = LoggerFactory.getLogger(RebookBooking.class);
 
     private final IdempotencyService idempotencyService;
     private final AvailabilityService availabilityService;
