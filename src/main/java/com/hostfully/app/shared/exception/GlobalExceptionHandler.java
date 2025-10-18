@@ -4,6 +4,7 @@ import com.hostfully.app.block.exceptions.*;
 import com.hostfully.app.booking.exception.*;
 import com.hostfully.app.infra.exception.InvalidDateRangeException;
 import com.hostfully.app.infra.exception.PropertyNotFoundException;
+import com.hostfully.app.property.exception.PropertyCreationException;
 import jakarta.servlet.http.HttpServletRequest;
 import java.net.URI;
 import java.time.Instant;
@@ -287,5 +288,22 @@ public class GlobalExceptionHandler {
         if (log.isErrorEnabled()) log.error(ex.getMessage(), ex);
 
         return ResponseEntity.status(HttpStatus.CONFLICT).body(problemDetail);
+    }
+
+    @ExceptionHandler(PropertyCreationException.class)
+    public ResponseEntity<ProblemDetail> handlePropertyCreationException(
+            PropertyCreationException ex, HttpServletRequest request) {
+
+        ProblemDetail problemDetail =
+                ProblemDetail.forStatusAndDetail(HttpStatus.INTERNAL_SERVER_ERROR, ex.getMessage());
+
+        problemDetail.setType(URI.create(PROBLEM_BASE_URL));
+        problemDetail.setTitle("Internal Server Error");
+        problemDetail.setInstance(URI.create(request.getRequestURI()));
+        problemDetail.setProperty("timestamp", Instant.now());
+
+        if (log.isErrorEnabled()) log.error(ex.getMessage(), ex);
+
+        return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(problemDetail);
     }
 }

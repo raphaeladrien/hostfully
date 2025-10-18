@@ -7,6 +7,7 @@ import com.hostfully.app.block.exceptions.*;
 import com.hostfully.app.booking.exception.*;
 import com.hostfully.app.infra.exception.InvalidDateRangeException;
 import com.hostfully.app.infra.exception.PropertyNotFoundException;
+import com.hostfully.app.property.exception.PropertyCreationException;
 import jakarta.servlet.http.HttpServletRequest;
 import java.lang.reflect.Method;
 import java.net.URI;
@@ -374,6 +375,26 @@ class GlobalExceptionHandlerTest {
         assertThat(problemDetail.getStatus()).isEqualTo(HttpStatus.CONFLICT.value());
         assertThat(problemDetail.getTitle()).isEqualTo(exception.getTitle());
         assertThat(problemDetail.getDetail()).isEqualTo("Update not allowed");
+        assertThat(problemDetail.getInstance()).isEqualTo(URI.create(TEST_REQUEST_URI));
+        assertThat(problemDetail.getType()).isEqualTo(URI.create("about:blank"));
+        assertThat(problemDetail.getProperties()).containsKey("timestamp");
+    }
+
+    @Test
+    @DisplayName("Should handle PropertyCreationException and return conflict status")
+    void shouldHandlePropertyCreationException() {
+        final PropertyCreationException exception = new PropertyCreationException("Internal Server Error", null);
+
+        final ResponseEntity<ProblemDetail> response =
+                globalExceptionHandler.handlePropertyCreationException(exception, request);
+
+        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.INTERNAL_SERVER_ERROR);
+        assertThat(response.getBody()).isNotNull();
+
+        final ProblemDetail problemDetail = response.getBody();
+        assertThat(problemDetail.getStatus()).isEqualTo(HttpStatus.INTERNAL_SERVER_ERROR.value());
+        assertThat(problemDetail.getTitle()).isEqualTo("Internal Server Error");
+        assertThat(problemDetail.getDetail()).isEqualTo("Internal Server Error");
         assertThat(problemDetail.getInstance()).isEqualTo(URI.create(TEST_REQUEST_URI));
         assertThat(problemDetail.getType()).isEqualTo(URI.create("about:blank"));
         assertThat(problemDetail.getProperties()).containsKey("timestamp");
