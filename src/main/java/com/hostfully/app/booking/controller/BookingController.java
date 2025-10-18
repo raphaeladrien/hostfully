@@ -8,11 +8,12 @@ import com.hostfully.app.booking.usecase.*;
 import com.hostfully.app.booking.usecase.CreateBooking.CreateBookingCommand;
 import com.hostfully.app.booking.usecase.UpdateBooking.UpdateBookingCommand;
 import jakarta.validation.Valid;
+import java.net.URI;
 import java.util.UUID;
 import lombok.AllArgsConstructor;
-import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 
 @RestController
 @RequestMapping("/v1/bookings")
@@ -37,7 +38,13 @@ public class BookingController {
                 request.guest(),
                 request.numberGuest(),
                 idempotencyKey));
-        return ResponseEntity.status(HttpStatus.CREATED).body(booking);
+
+        final URI location = ServletUriComponentsBuilder.fromCurrentContextPath()
+                .path("/api/bookings/{id}")
+                .buildAndExpand(booking.getId())
+                .toUri();
+
+        return ResponseEntity.created(location).body(booking);
     }
 
     @PostMapping("/{id}/cancel")

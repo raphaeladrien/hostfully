@@ -29,6 +29,9 @@ public class BlockController {
             @RequestHeader(value = "Idempotency-Key") final UUID idempotencyKey) {
         final Block block = createBlock.execute(new CreateBlockCommand(
                 request.property(), request.reason(), request.startDate(), request.endDate(), idempotencyKey));
+
+        // Per RFC 7231 POST may return 201 created with location have, none sent here, once we don't have a get
+        // endpoint defined
         return ResponseEntity.status(HttpStatus.CREATED).body(block);
     }
 
