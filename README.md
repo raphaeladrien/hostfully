@@ -79,7 +79,7 @@ block
 └── usecase
 ```
 
-* **Manages**: Blocking dates or time periods for properties.
+* **Handles**: Blocking dates or time periods for properties.
 * **controller**: REST API endpoints to interact with block functionality.
 * **dto**: Data Transfer Objects used in API requests/responses.
 * **domain**: Core business models and rules related to blocks.
@@ -137,13 +137,13 @@ property
 └── usecase
 ```
 
-* **Manages**: Property-related logic (e.g., property info, amenities).
+* **Handles**: Creation of new properties in the system.
 * **domain**: Core property models.
 * **exception**: Property-specific errors.
 * **usecase**: Business logic for properties (create, update, fetch).
 
 
-*!Important:* This extra domain was created solely to simplify interactions with other APIs.
+**Important:** This extra domain was created solely to simplify interactions with other APIs.
 ---
 
 ### 6. `runner`
@@ -164,8 +164,9 @@ shared
 
 * **Shared resources** across the application.
 * **config**: Application configuration classes (e.g., audit config, object mapper).
-* **exception**: Global exception handlers.
+* **exception**: Global exception handler.
 * **util**: Helper classes and utilities used across modules.
+* **Idempotency service**: Service ensuring safe repeated requests without side effects
 
 ---
 
