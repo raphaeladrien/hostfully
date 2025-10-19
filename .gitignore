@@ -43,7 +43,6 @@ logs/
 test_results/
 
 # Package Files #
-*.jar
 *.war
 *.nar
 *.ear
