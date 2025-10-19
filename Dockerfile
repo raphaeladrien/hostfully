@@ -14,7 +14,7 @@ COPY src src
 
 RUN chmod +x gradlew
 
-RUN ./gradlew clean build --parallel
+RUN ./gradlew clean build -x test
 
 # Production image
 FROM mcr.microsoft.com/openjdk/jdk:21-distroless AS booking
