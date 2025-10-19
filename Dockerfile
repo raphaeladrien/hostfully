@@ -7,7 +7,7 @@ ENV APP_HOME=/app \
 
 WORKDIR $APP_HOME
 
-COPY gradle gradle
+COPY gradle/ ./gradle/
 COPY ["gradlew", "build.gradle", "settings.gradle", "$APP_HOME/"]
 
 COPY src src
