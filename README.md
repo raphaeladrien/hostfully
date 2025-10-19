@@ -2,6 +2,15 @@
 
 This document explains the architecture and organization of the Booking project.
 
+![hostfully-pipeline](https://github.com/raphaeladrien/hostfully/actions/workflows/ci.yml/badge.svg)
+![Last Commit](https://img.shields.io/github/last-commit/raphaeladrien/hostfully.svg?color=blue&label=last%20commit)
+
+[![Docker](https://img.shields.io/badge/Docker-blue.svg)](https://www.docker.com/)
+[![Java 21](https://img.shields.io/badge/Java-21-red.svg)](https://www.oracle.com/java/technologies/downloads/)
+[![Spring Boot 3](https://img.shields.io/badge/Spring_Boot-green.svg)](https://spring.io/projects/spring-boot)
+[![Gradle](https://img.shields.io/badge/Gradle-olivedrab.svg)](https://spring.io/projects/spring-boot)
+[![H2 Database](https://img.shields.io/badge/H2_Database-blue.svg)](https://www.h2database.com/html/main.html)
+
 ---
 
 ## Table of Contents
