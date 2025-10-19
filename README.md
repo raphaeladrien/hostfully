@@ -4,6 +4,29 @@ This document explains the architecture and organization of the Booking project.
 
 ---
 
+## Table of Contents
+
+- [Project Root](#project-root)
+- [Feature Modules](#feature-modules)
+  - [availability](#1-availability)
+  - [block](#2-block)
+  - [booking](#3-booking)
+  - [infra](#4-infra)
+  - [property](#5-property)
+  - [runner](#6-runner)
+  - [shared](#7-shared)
+- [Summary of Architectural Principles](#summary-of-architectural-principles)
+- [Running the Application](#running-the-application)
+- [API Documentation](#api-documentation)
+- [API Basic Usage](#api-basic-usage)
+  - [Blocks API](#blocks-api)
+  - [Properties API](#properties-api)
+  - [Bookings API](#bookings-api)
+- [Quick Reference Table](#quick-reference-table)
+- [Schema References](#schema-references)
+
+---
+
 ## Project Root
 
 ```
@@ -159,7 +182,7 @@ docker-compose up booking
 ### Run the Tests
 It is also possible to run the tests using Docker Compose:
 ```bash
-docker-compose run booking
+docker-compose run tests
 ```
 **Note:** At the end of the test execution, a **test coverage report** will be displayed directly in the terminal.
 
@@ -195,8 +218,7 @@ This guide explains how to interact with the Booking API.
   "property": "string",
   "reason": "string",
   "startDate": "YYYY-MM-DD",
-  "endDate": "YYYY-MM-DD",
-  "endAfterStart": true
+  "endDate": "YYYY-MM-DD"
 }
 ```
 
