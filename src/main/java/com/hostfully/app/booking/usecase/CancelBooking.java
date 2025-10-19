@@ -43,7 +43,7 @@ public class CancelBooking {
             return bookingResult;
         } catch (DataAccessException ex) {
             log.error("Failed to retrieve a booking: {}", id, ex);
-            throw new BookingGenericException("Unexpected error while retrieving booking", ex);
+            throw new BookingGenericException("Unexpected error while canceling booking", ex);
         }
     }
 
