@@ -1,5 +1,6 @@
 package com.hostfully.app.booking.controller.dto;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.hostfully.app.shared.util.DateRangeValidator;
 import jakarta.validation.constraints.AssertTrue;
 import jakarta.validation.constraints.FutureOrPresent;
@@ -11,6 +12,7 @@ public record UpdateBookingRequest(
         String guest,
         int numberGuest) {
     @AssertTrue(message = "End date must be after start date")
+    @JsonIgnore
     public boolean isEndAfterStart() {
         if (startDate != null && endDate != null)
             return DateRangeValidator.validateDateRange(startDate, endDate, false);
