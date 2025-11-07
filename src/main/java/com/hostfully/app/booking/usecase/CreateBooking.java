@@ -3,6 +3,7 @@ package com.hostfully.app.booking.usecase;
 import com.hostfully.app.availability.service.AvailabilityService;
 import com.hostfully.app.booking.domain.Booking;
 import com.hostfully.app.booking.exception.BookingGenericException;
+import com.hostfully.app.booking.exception.ConcurrentBookingException;
 import com.hostfully.app.booking.exception.OverlapBookingException;
 import com.hostfully.app.infra.entity.BookingEntity.BookingStatus;
 import com.hostfully.app.infra.entity.PropertyEntity;
@@ -11,17 +12,19 @@ import com.hostfully.app.infra.exception.PropertyNotFoundException;
 import com.hostfully.app.infra.mapper.BookingMapper;
 import com.hostfully.app.infra.repository.BookingRepository;
 import com.hostfully.app.infra.repository.PropertyRepository;
+import com.hostfully.app.shared.BookingLockRegistry;
 import com.hostfully.app.shared.IdempotencyService;
 import com.hostfully.app.shared.util.DateRangeValidator;
 import com.hostfully.app.shared.util.NanoIdGenerator;
-import jakarta.transaction.Transactional;
 import java.time.LocalDate;
 import java.util.Optional;
 import java.util.UUID;
+import java.util.concurrent.locks.ReentrantLock;
 import lombok.AllArgsConstructor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 @Service
 @AllArgsConstructor
@@ -34,9 +37,25 @@ public class CreateBooking {
     private final AvailabilityService availabilityService;
     private final PropertyRepository propertyRepository;
     private final BookingRepository bookingRepository;
+    private final BookingLockRegistry bookingLockRegistry;
+
+    public Booking execute(final CreateBookingCommand command) {
+        final ReentrantLock lock = bookingLockRegistry.getLock(command.property);
+        boolean acquired = lock.tryLock();
+
+        if (!acquired) {
+            throw new ConcurrentBookingException("Booking is already in progress");
+        }
+
+        try {
+            return doBooking(command);
+        } finally {
+            lock.unlock();
+        }
+    }
 
     @Transactional
-    public Booking execute(final CreateBookingCommand command) {
+    private Booking doBooking(final CreateBookingCommand command) {
         final UUID idempotencyKey = command.idempotencyKey;
         final Optional<Booking> result = idempotencyService.getResponse(idempotencyKey, Booking.class);
         if (result.isPresent()) return result.get();
