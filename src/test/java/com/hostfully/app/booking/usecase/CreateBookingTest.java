@@ -15,14 +15,17 @@ import com.hostfully.app.infra.entity.PropertyEntity;
 import com.hostfully.app.infra.exception.PropertyNotFoundException;
 import com.hostfully.app.infra.repository.BookingRepository;
 import com.hostfully.app.infra.repository.PropertyRepository;
+import com.hostfully.app.shared.BookingLockRegistry;
 import com.hostfully.app.shared.IdempotencyService;
 import com.hostfully.app.shared.util.NanoIdGenerator;
 import java.time.LocalDate;
 import java.util.Optional;
 import java.util.UUID;
+import java.util.concurrent.locks.ReentrantLock;
 import java.util.stream.Stream;
 import org.assertj.core.api.SoftAssertions;
 import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
@@ -37,8 +40,19 @@ class CreateBookingTest {
     private final AvailabilityService availabilityService = mock(AvailabilityService.class);
     private final PropertyRepository propertyRepository = mock(PropertyRepository.class);
     private final BookingRepository bookingRepository = mock(BookingRepository.class);
+    private final BookingLockRegistry bookingLockRegistry = mock(BookingLockRegistry.class);
     private final CreateBooking subject = new CreateBooking(
-            idempotencyService, nanoIdGenerator, availabilityService, propertyRepository, bookingRepository);
+            idempotencyService,
+            nanoIdGenerator,
+            availabilityService,
+            propertyRepository,
+            bookingRepository,
+            bookingLockRegistry);
+
+    @BeforeEach
+    void setup() {
+        when(bookingLockRegistry.getLock(anyString())).thenReturn(new ReentrantLock());
+    }
 
     @Test
     @DisplayName("should return existing booking when idempotency key already exists")
