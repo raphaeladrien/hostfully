@@ -14,7 +14,6 @@ import com.hostfully.app.infra.repository.PropertyRepository;
 import com.hostfully.app.shared.IdempotencyService;
 import com.hostfully.app.shared.util.DateRangeValidator;
 import com.hostfully.app.shared.util.NanoIdGenerator;
-import jakarta.transaction.Transactional;
 import java.time.LocalDate;
 import java.util.Optional;
 import java.util.UUID;
@@ -22,6 +21,7 @@ import lombok.AllArgsConstructor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 @Service
 @AllArgsConstructor
