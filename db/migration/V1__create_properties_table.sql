@@ -4,6 +4,8 @@ CREATE TABLE IF NOT EXISTS properties
     external_id VARCHAR(12) NOT NULL UNIQUE,
     description VARCHAR(250) NOT NULL,
     alias VARCHAR(50) NOT NULL,
+    version BIGINT NOT NULL DEFAULT 1,
+    status VARCHAR(50) NOT NULL DEFAULT 'AVAILABLE',
     created_at TIMESTAMP NOT NULL,
     updated_at TIMESTAMP NOT NULL
 );

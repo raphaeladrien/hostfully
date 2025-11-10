@@ -3,9 +3,11 @@ package com.hostfully.app.booking.usecase;
 import com.hostfully.app.availability.service.AvailabilityService;
 import com.hostfully.app.booking.domain.Booking;
 import com.hostfully.app.booking.exception.BookingGenericException;
+import com.hostfully.app.booking.exception.ConcurrentBookingException;
 import com.hostfully.app.booking.exception.OverlapBookingException;
 import com.hostfully.app.infra.entity.BookingEntity.BookingStatus;
 import com.hostfully.app.infra.entity.PropertyEntity;
+import com.hostfully.app.infra.entity.PropertyEntity.PropertyEntityStatus;
 import com.hostfully.app.infra.exception.InvalidDateRangeException;
 import com.hostfully.app.infra.exception.PropertyNotFoundException;
 import com.hostfully.app.infra.mapper.BookingMapper;
@@ -21,6 +23,7 @@ import java.util.UUID;
 import lombok.AllArgsConstructor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.dao.OptimisticLockingFailureException;
 import org.springframework.stereotype.Service;
 
 @Service
@@ -60,11 +63,25 @@ public class CreateBooking {
                     + "Please refresh the page or try again later.");
 
         final PropertyEntity propertyEntity = getProperty(booking.getPropertyId());
+
         try {
+            if (propertyEntity.getStatus().isBooked())
+                throw new OverlapBookingException("We’re unable to process your booking for this property. "
+                        + "Please refresh the page or try again later.");
+
+            // Explicitly save the property to increment version, ensuring concurrent bookings for the same property
+            // fail
+            propertyEntity.setStatus(PropertyEntityStatus.BOOKED);
+            propertyRepository.save(propertyEntity);
+
             final Booking bookingResult =
                     BookingMapper.toDomain(bookingRepository.save(BookingMapper.toEntity(booking, propertyEntity)));
             idempotencyService.saveResponse(idempotencyKey, bookingResult);
+
             return booking;
+        } catch (OptimisticLockingFailureException ex) {
+            log.error("Failed to create a booking: {}", booking, ex);
+            throw new ConcurrentBookingException("This property is being booked by another user. Please try again.");
         } catch (Exception ex) {
             log.error("Failed to create a booking: {}", booking, ex);
             throw new BookingGenericException("Unexpected error while creating booking", ex);
