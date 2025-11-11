@@ -65,14 +65,10 @@ public class CreateBooking {
         final PropertyEntity propertyEntity = getProperty(booking.getPropertyId());
 
         try {
-            if (propertyEntity.getStatus().isBooked())
-                throw new OverlapBookingException("We’re unable to process your booking for this property. "
-                        + "Please refresh the page or try again later.");
-
             // Explicitly save the property to increment version, ensuring concurrent bookings for the same property
             // fail
             propertyEntity.setStatus(PropertyEntityStatus.BOOKED);
-            propertyRepository.save(propertyEntity);
+            propertyRepository.saveAndFlush(propertyEntity);
 
             final Booking bookingResult =
                     BookingMapper.toDomain(bookingRepository.save(BookingMapper.toEntity(booking, propertyEntity)));

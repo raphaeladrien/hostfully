@@ -6,7 +6,6 @@ import static org.mockito.Mockito.verify;
 
 import com.hostfully.app.availability.service.AvailabilityService;
 import com.hostfully.app.booking.domain.Booking;
-import com.hostfully.app.booking.exception.ConcurrentBookingException;
 import com.hostfully.app.infra.entity.PropertyEntity;
 import com.hostfully.app.infra.repository.BookingRepository;
 import com.hostfully.app.infra.repository.PropertyRepository;
@@ -15,10 +14,7 @@ import com.hostfully.app.shared.util.NanoIdGenerator;
 import java.time.LocalDate;
 import java.util.UUID;
 import java.util.concurrent.*;
-import org.junit.jupiter.api.Assertions;
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.DisplayName;
-import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.*;
 import org.mockito.Mockito;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -41,16 +37,18 @@ public class OverlapBookingServiceTest {
     @Autowired
     private BookingRepository bookingRepository;
 
+    private PropertyEntity property;
+
     private final LocalDate startDate = LocalDate.now();
     private final LocalDate endDate = LocalDate.now().plusDays(1);
     private final String propertyId = "PROP-001";
 
     @BeforeEach
     void setup() {
-        propertyRepository.save(new PropertyEntity(propertyId, "Beach House", "Beach baby!"));
+        property = propertyRepository.save(new PropertyEntity(propertyId, "Beach House", "Beach baby!"));
     }
 
-    @Test
+    @RepeatedTest(value = 10000, failureThreshold = 9999)
     @DisplayName("ensure that the system won't overlap a booking")
     void ensureNoOverbookingTest() throws InterruptedException, ExecutionException {
         final CreateBookingCommand command1 =
@@ -95,13 +93,12 @@ public class OverlapBookingServiceTest {
             exception = (Exception) e.getCause();
         }
 
-        Assertions.assertTrue((booking1 != null && booking2 == null && exception instanceof ConcurrentBookingException)
-                || (booking2 != null && booking1 == null && exception instanceof ConcurrentBookingException));
+        executor.shutdown();
+
+        Assertions.assertEquals(1, bookingRepository.findByProperty(propertyId).size());
 
         verify(spyCreateBooking, times(1)).execute(command1);
         verify(spyCreateBooking, times(1)).execute(command2);
-
-        executor.shutdown();
     }
 
     private CreateBooking.CreateBookingCommand createCommand(
