@@ -4,6 +4,7 @@ import com.hostfully.app.infra.entity.BookingEntity;
 import com.hostfully.app.infra.entity.BookingEntity.BookingStatus;
 import jakarta.transaction.Transactional;
 import java.time.LocalDate;
+import java.util.List;
 import java.util.Optional;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Modifying;
@@ -46,4 +47,7 @@ public interface BookingRepository extends JpaRepository<BookingEntity, Long> {
 
     @Query("SELECT b FROM BookingEntity b LEFT JOIN FETCH b.property where b.externalId = :externalId")
     Optional<BookingEntity> findByExternalId(String externalId);
+
+    @Query("SELECT b FROM BookingEntity b LEFT JOIN FETCH b.property p where p.externalId = :externalId")
+    List<BookingEntity> findByProperty(String externalId);
 }

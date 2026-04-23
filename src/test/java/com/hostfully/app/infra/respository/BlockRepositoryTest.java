@@ -36,10 +36,9 @@ public class BlockRepositoryTest {
     void setUp() {
         property1 = entityManager.persist(new PropertyEntity("PROP-001", "Beach House", "Beach baby!"));
         property2 = entityManager.persist(new PropertyEntity("PROP-002", "Mountain Cabin", "Relax time"));
+        entityManager.flush();
 
         createAndSaveBlock("asert-1234", property2, LocalDate.of(2025, 2, 5), LocalDate.of(2025, 2, 15));
-
-        entityManager.flush();
     }
 
     @ParameterizedTest
